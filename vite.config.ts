@@ -11,5 +11,4 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
-  base: process.env.VITE_API_BASE_URL || "/agent-academic-activity",
 });

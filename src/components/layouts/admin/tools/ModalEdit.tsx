@@ -16,7 +16,7 @@ interface ToolEditDialogProps {
   onSuccess: () => void;
 }
 
-export default function ToolEditDialog({ open, tool, onOpenChange, onSuccess }: ToolEditDialogProps) {
+const ToolEditDialog = ({ open, tool, onOpenChange, onSuccess }: ToolEditDialogProps) => {
   const {
     register,
     handleSubmit,
@@ -135,4 +135,6 @@ export default function ToolEditDialog({ open, tool, onOpenChange, onSuccess }: 
       </DialogContent>
     </Dialog>
   );
-}
+};
+
+export default ToolEditDialog;

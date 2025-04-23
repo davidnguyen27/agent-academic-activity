@@ -22,7 +22,7 @@ const navItems = [
   { label: "Assessments", icon: ClipboardCheck, to: "/admin/assessment" },
   { label: "Materials", icon: Users, to: "/admin/material" },
   { label: "Tools", icon: Wrench, to: "/admin/tool" },
-  { label: "abcd", icon: BookOpen, to: "#" },
+  { label: "Majors", icon: BookOpen, to: "/admin/major" },
   { label: "Settings", icon: Settings, to: "#" },
 ];
 

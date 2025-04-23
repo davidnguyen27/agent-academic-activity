@@ -19,8 +19,8 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { BadgeInfo, Trash2 } from "lucide-react";
-import ToolCreateDialog from "@/components/layouts/admin/ModalCreate";
-import ToolEditDialog from "@/components/layouts/admin/ModalEdit";
+import ToolCreateDialog from "@/components/layouts/admin/tools/ModalCreate";
+import ToolEditDialog from "@/components/layouts/admin/tools/ModalEdit";
 import { toolService } from "@/services/tool.service";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useLoading } from "@/hooks/useLoading";
@@ -30,14 +30,13 @@ import { toast } from "sonner";
 const ToolManagement = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const searchParams = new URLSearchParams(location.search);
 
   const [tools, setTools] = useState<Tool[]>([]);
-  const [sortedTools, setSortedTools] = useState<Tool[]>([]);
   const [search, setSearch] = useState("");
   const [totalPages, setTotalPages] = useState(1);
   const [page, setPage] = useState(1);
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc" | "none">("none");
+  const [sortBy, setSortBy] = useState<"code" | "name" | "default">("default");
+  const [deletedFilter, setDeletedFilter] = useState(false);
   const [selectedTool, setSelectedTool] = useState<Tool | null>(null);
   const [openDetail, setOpenDetail] = useState(false);
 
@@ -49,42 +48,28 @@ const ToolManagement = () => {
     const res = await startLoading(() =>
       toolService.getAllTools({
         pageNumber: page,
-        pageSize: 10,
+        pageSize,
         search: debouncedSearch,
+        sortBy: sortBy === "default" ? undefined : sortBy,
+        isDelete: deletedFilter,
       })
     );
     setTools(res.items);
     setTotalPages(res.totalPages);
-  }, [page, debouncedSearch, startLoading]);
+  }, [page, pageSize, debouncedSearch, startLoading, sortBy, deletedFilter]);
 
-  useEffect(() => {
-    fetchTools();
-  }, [fetchTools]);
-
-  useEffect(() => {
-    const sorted = [...tools];
-    if (sortOrder === "asc") {
-      sorted.sort((a, b) => a.toolCode.localeCompare(b.toolCode));
-    } else if (sortOrder === "desc") {
-      sorted.sort((a, b) => b.toolCode.localeCompare(a.toolCode));
-    }
-    setSortedTools(sorted);
-  }, [tools, sortOrder]);
-
-  const handleOpenDetail = useCallback(
-    async (id: string) => {
-      navigate(`/admin/tool?toolId=${id}`);
+  const handleOpenDetail = useCallback(async (id: string) => {
+    try {
       const data = await toolService.getToolById(id);
       setSelectedTool(data);
       setOpenDetail(true);
-    },
-    [navigate]
-  );
+    } catch {
+      toast.error("Failed to load tool details");
+    }
+  }, []);
 
   const handleDeleteTool = async (id: string) => {
-    const confirmed = confirm("Are you sure you want to delete this tool?");
-    if (!confirmed) return;
-
+    if (!confirm("Are you sure you want to delete this tool?")) return;
     try {
       await toolService.deleteTool(id);
       toast.success("Tool deleted successfully!");
@@ -95,11 +80,22 @@ const ToolManagement = () => {
   };
 
   useEffect(() => {
-    const id = searchParams.get("toolId");
-    if (id) {
+    const params = new URLSearchParams(location.search);
+    const id = params.get("toolId");
+
+    if (id && (!openDetail || selectedTool?.toolId !== id)) {
       handleOpenDetail(id);
     }
-  }, [searchParams, handleOpenDetail]);
+
+    if (!id && openDetail) {
+      setOpenDetail(false);
+      setSelectedTool(null);
+    }
+  }, [location.search, openDetail, selectedTool, handleOpenDetail]);
+
+  useEffect(() => {
+    fetchTools();
+  }, [fetchTools]);
 
   return (
     <div className="bg-white p-5 shadow-md rounded-2xl">
@@ -123,14 +119,23 @@ const ToolManagement = () => {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 my-6">
         <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by name..." />
-        <Select onValueChange={(value) => setSortOrder(value as "asc" | "desc" | "none")}>
+        <Select onValueChange={(value) => setSortBy(value as "code" | "name" | "default")}>
           <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Sort by code" />
+            <SelectValue placeholder="Sort by field" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="none">-- Default --</SelectItem>
-            <SelectItem value="asc">Sort ascending by code</SelectItem>
-            <SelectItem value="desc">Sort descending by code</SelectItem>
+            <SelectItem value="default">Default</SelectItem>
+            <SelectItem value="code">Sort by Code</SelectItem>
+            <SelectItem value="name">Sort by Name</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select onValueChange={(value) => setDeletedFilter(value === "true")}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Active or Deleted" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="false">Active</SelectItem>
+            <SelectItem value="true">Deleted</SelectItem>
           </SelectContent>
         </Select>
         <ToolCreateDialog onSuccess={fetchTools} />
@@ -158,8 +163,8 @@ const ToolManagement = () => {
                   <span className="text-blue-500 animate-pulse">Loading...</span>
                 </TableCell>
               </TableRow>
-            ) : Array.isArray(sortedTools) && sortedTools.length > 0 ? (
-              sortedTools.map((tool, i) => (
+            ) : tools.length > 0 ? (
+              tools.map((tool, i) => (
                 <TableRow key={tool.toolCode}>
                   <TableCell>{(page - 1) * pageSize + i + 1}</TableCell>
                   <TableCell>{tool.toolCode}</TableCell>
@@ -180,7 +185,9 @@ const ToolManagement = () => {
                       size={16}
                       color="blue"
                       className="cursor-pointer"
-                      onClick={() => handleOpenDetail(tool.toolId)}
+                      onClick={() => {
+                        navigate(`/admin/tool?toolId=${tool.toolId}`);
+                      }}
                     />
                   </TableCell>
                 </TableRow>
@@ -196,7 +203,7 @@ const ToolManagement = () => {
         </Table>
       </div>
 
-      <div className="flex mt-8">
+      <div className="flex justify-end mt-8">
         <Pagination className="ml-auto">
           <PaginationContent>
             <PaginationItem>
@@ -216,7 +223,17 @@ const ToolManagement = () => {
         </Pagination>
       </div>
 
-      <ToolEditDialog open={openDetail} tool={selectedTool} onOpenChange={setOpenDetail} onSuccess={fetchTools} />
+      <ToolEditDialog
+        open={openDetail}
+        tool={selectedTool}
+        onSuccess={fetchTools}
+        onOpenChange={(open) => {
+          setOpenDetail(open);
+          if (!open) {
+            navigate("/admin/tool", { replace: true });
+          }
+        }}
+      />
     </div>
   );
 };

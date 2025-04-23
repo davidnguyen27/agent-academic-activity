@@ -1,9 +1,27 @@
 import axiosInstance from "@/configs/axios.config";
 import { ToolInput } from "@/utils/validate/tool.schema";
 
+interface params {
+  pageNumber: number;
+  pageSize: number;
+  search: string;
+  sortBy?: "name" | "code" | "default";
+  sortOrder?: "Ascending" | "Descending";
+  isDelete?: boolean;
+}
+
 export const toolService = {
-  getAllTools: async (params: { pageNumber: number; pageSize: number; search: string }) => {
-    const response = await axiosInstance.get("/api/tool/get-all-tools", { params });
+  getAllTools: async ({
+    pageNumber = 1,
+    pageSize = 10,
+    search = "",
+    sortBy = "code",
+    sortOrder = "Ascending",
+    isDelete = false,
+  }: params) => {
+    const response = await axiosInstance.get("/api/tool/get-all-tools", {
+      params: { pageNumber, pageSize, search, sortBy, sortOrder, isDelete },
+    });
 
     return response.data;
   },
@@ -15,7 +33,7 @@ export const toolService = {
   },
 
   getToolById: async (id: string) => {
-    const response = await axiosInstance.get(`/api/tool/get-tool/${id}`);
+    const response = await axiosInstance.get(`/api/tool/get-tool-by-id/${id}`);
 
     return response.data;
   },
