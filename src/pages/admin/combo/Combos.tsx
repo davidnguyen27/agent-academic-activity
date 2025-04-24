@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
@@ -19,35 +19,37 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { BadgeInfo, Trash2 } from "lucide-react";
-import { majorService } from "@/services/major.service";
+import { comboService } from "@/services/combo.service";
 import { useLoading } from "@/hooks/useLoading";
 import { useDebounce } from "@/hooks/useDebounce";
 import { formatDateTime } from "@/utils/format/date-time.format";
-import ModalCreateMajor from "@/components/layouts/admin/majors/ModalCreate";
-import ModalEditMajor from "@/components/layouts/admin/majors/ModalEdit";
+import ModalCreateCombo from "@/components/layouts/admin/combos/ModalCreate";
+import ModalEditCombo from "@/components/layouts/admin/combos/ModalEdit";
 import { toast } from "sonner";
 import ConfirmDeleteDialog from "@/components/layouts/admin/ModalConfirm";
+import { majorService } from "@/services/major.service";
 
-const MajorManagement = () => {
+const ComboManagement = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const [combos, setCombos] = useState<Combo[]>([]);
   const [majors, setMajors] = useState<Major[]>([]);
   const [search, setSearch] = useState("");
   const [totalPages, setTotalPages] = useState(1);
   const [page, setPage] = useState(1);
   const [sortBy, setSortBy] = useState<"code" | "name" | "default">("default");
   const [deletedFilter, setDeletedFilter] = useState(false);
-  const [selectedMajor, setSelectedMajor] = useState<Major | null>(null);
+  const [selectedCombo, setSelectedCombo] = useState<Combo | null>(null);
   const [openDetail, setOpenDetail] = useState(false);
 
   const debouncedSearch = useDebounce(search, 500);
   const { isLoading, startLoading } = useLoading();
   const pageSize = 10;
 
-  const fetchMajors = useCallback(async () => {
+  const fetchCombos = useCallback(async () => {
     const res = await startLoading(() =>
-      majorService.getAllMajors({
+      comboService.getAllCombos({
         pageNumber: page,
         pageSize,
         search: debouncedSearch,
@@ -55,50 +57,62 @@ const MajorManagement = () => {
         isDelete: deletedFilter,
       })
     );
-    setMajors(res.items);
+    setCombos(res.items);
     setTotalPages(res.totalPages);
   }, [page, pageSize, debouncedSearch, startLoading, sortBy, deletedFilter]);
 
   const handleOpenDetail = useCallback(async (id: string) => {
     try {
-      const data = await majorService.getMajorById(id);
-      setSelectedMajor(data);
+      const data = await comboService.getComboById(id);
+      setSelectedCombo(data);
       setOpenDetail(true);
     } catch {
-      toast.error("Failed to load major details");
+      toast.error("Failed to load combo details");
     }
   }, []);
 
-  const handleDeleteMajor = async (id: string) => {
+  const handleDelete = async (id: string) => {
     try {
-      await majorService.deleteMajor(id);
-      toast.success("Major deleted successfully!");
-      await fetchMajors();
+      await comboService.deleteCombo(id);
+      toast.success("Combo deleted successfully!");
+      await fetchCombos();
     } catch {
-      toast.error("Failed to delete major. Try again later.");
+      toast.error("Failed to delete combo. Try again later!");
     }
   };
+
+  const majorMap = useMemo(() => {
+    const map = new Map<string, string>();
+    majors.forEach((m) => map.set(m.majorId, m.majorName));
+    return map;
+  }, [majors]);
+
+  useEffect(() => {
+    majorService.getAllMajors({ pageSize: 1000 }).then((res) => {
+      setMajors(res.items);
+    });
+  }, []);
 
   useEffect(() => {
     const id = new URLSearchParams(location.search).get("id");
 
-    if (id && (!openDetail || selectedMajor?.majorId !== id)) {
+    if (id && (!openDetail || selectedCombo?.comboId !== id)) {
       handleOpenDetail(id);
     }
 
     if (!id && openDetail) {
       setOpenDetail(false);
-      setSelectedMajor(null);
+      setSelectedCombo(null);
     }
-  }, [location.search, openDetail, selectedMajor, handleOpenDetail]);
+  }, [location.search, openDetail, selectedCombo, handleOpenDetail]);
 
   useEffect(() => {
-    fetchMajors();
-  }, [fetchMajors]);
+    fetchCombos();
+  }, [fetchCombos]);
 
   return (
     <div className="bg-white p-5 shadow-md rounded-2xl">
-      <h1 className="text-2xl font-bold text-blue-500 mb-4">Major Management</h1>
+      <h1 className="text-2xl font-bold text-blue-500 mb-4">Combo Management</h1>
 
       <Breadcrumb>
         <BreadcrumbList>
@@ -136,7 +150,7 @@ const MajorManagement = () => {
           </SelectContent>
         </Select>
 
-        <ModalCreateMajor onSuccess={fetchMajors} />
+        <ModalCreateCombo onSuccess={fetchCombos} />
       </div>
 
       <div className="rounded-lg border overflow-x-auto">
@@ -146,7 +160,9 @@ const MajorManagement = () => {
               <TableHead>No.</TableHead>
               <TableHead>Code</TableHead>
               <TableHead>Name</TableHead>
-              <TableHead>Start At</TableHead>
+              <TableHead>description</TableHead>
+              <TableHead>Note</TableHead>
+              <TableHead>Major</TableHead>
               <TableHead>Created At</TableHead>
               <TableHead>Updated At</TableHead>
               <TableHead>Action</TableHead>
@@ -155,21 +171,23 @@ const MajorManagement = () => {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-10 text-blue-500 animate-pulse">
-                  Loading...
+                <TableCell colSpan={9} className="text-center py-10">
+                  <span className="text-blue-500 animate-pulse">Loading...</span>
                 </TableCell>
               </TableRow>
-            ) : majors.length > 0 ? (
-              majors.map((major, i) => (
-                <TableRow key={major.majorId}>
-                  <TableCell>{(page - 1) * pageSize + i + 1}</TableCell>
-                  <TableCell>{major.majorCode}</TableCell>
-                  <TableCell>{major.majorName}</TableCell>
-                  <TableCell>{formatDateTime(major.startAt)}</TableCell>
-                  <TableCell>{formatDateTime(major.createdAt)}</TableCell>
-                  <TableCell>{formatDateTime(major.updatedAt)}</TableCell>
+            ) : combos.length > 0 ? (
+              combos.map((combo, index) => (
+                <TableRow key={combo.comboId}>
+                  <TableCell>{(page - 1) * pageSize + index + 1}</TableCell>
+                  <TableCell>{combo.comboCode}</TableCell>
+                  <TableCell>{combo.comboName}</TableCell>
+                  <TableCell>{combo.description}</TableCell>
+                  <TableCell>{combo.note}</TableCell>
+                  <TableCell>{majorMap.get(combo.majorId)}</TableCell>
+                  <TableCell>{formatDateTime(combo.createdAt)}</TableCell>
+                  <TableCell>{formatDateTime(combo.updatedAt)}</TableCell>
                   <TableCell className="flex gap-2">
-                    <ConfirmDeleteDialog onConfirm={() => handleDeleteMajor(major.majorId)}>
+                    <ConfirmDeleteDialog onConfirm={() => handleDelete(combo.comboId)}>
                       <Trash2 size={16} color="red" className="cursor-pointer" />
                     </ConfirmDeleteDialog>
                     <BadgeInfo
@@ -177,7 +195,7 @@ const MajorManagement = () => {
                       color="blue"
                       className="cursor-pointer"
                       onClick={() => {
-                        navigate(`/admin/major?id=${major.majorId}`);
+                        navigate(`/admin/combo?id=${combo.comboId}`);
                       }}
                     />
                   </TableCell>
@@ -186,7 +204,7 @@ const MajorManagement = () => {
             ) : (
               <TableRow>
                 <TableCell colSpan={6} className="text-center text-gray-400">
-                  No majors found.
+                  No combo found.
                 </TableCell>
               </TableRow>
             )}
@@ -213,14 +231,14 @@ const MajorManagement = () => {
           </PaginationContent>
         </Pagination>
       </div>
-      <ModalEditMajor
+      <ModalEditCombo
         open={openDetail}
-        major={selectedMajor}
-        onSuccess={fetchMajors}
+        combo={selectedCombo}
+        onSuccess={fetchCombos}
         onOpenChange={(open) => {
           setOpenDetail(open);
           if (!open) {
-            navigate("/admin/major", { replace: true });
+            navigate("/admin/combo", { replace: true });
           }
         }}
       />
@@ -228,4 +246,4 @@ const MajorManagement = () => {
   );
 };
 
-export default MajorManagement;
+export default ComboManagement;

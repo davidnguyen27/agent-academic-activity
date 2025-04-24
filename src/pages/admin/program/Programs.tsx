@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -19,35 +19,35 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { BadgeInfo, Trash2 } from "lucide-react";
-import { majorService } from "@/services/major.service";
-import { useLoading } from "@/hooks/useLoading";
+import ProgramCreateDialog from "@/components/layouts/admin/programs/ModalCreate";
+import ProgramEditDialog from "@/components/layouts/admin/programs/ModalEdit";
+import { programService } from "@/services/program.service";
 import { useDebounce } from "@/hooks/useDebounce";
-import { formatDateTime } from "@/utils/format/date-time.format";
-import ModalCreateMajor from "@/components/layouts/admin/majors/ModalCreate";
-import ModalEditMajor from "@/components/layouts/admin/majors/ModalEdit";
+import { useLoading } from "@/hooks/useLoading";
 import { toast } from "sonner";
+import { formatDateTime } from "@/utils/format/date-time.format";
 import ConfirmDeleteDialog from "@/components/layouts/admin/ModalConfirm";
 
-const MajorManagement = () => {
+const ProgramManagement = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const [majors, setMajors] = useState<Major[]>([]);
+  const [programs, setPrograms] = useState<Program[]>([]);
   const [search, setSearch] = useState("");
   const [totalPages, setTotalPages] = useState(1);
   const [page, setPage] = useState(1);
   const [sortBy, setSortBy] = useState<"code" | "name" | "default">("default");
   const [deletedFilter, setDeletedFilter] = useState(false);
-  const [selectedMajor, setSelectedMajor] = useState<Major | null>(null);
+  const [selectedProgram, setSelectedProgram] = useState<Program | null>(null);
   const [openDetail, setOpenDetail] = useState(false);
 
+  const pageSize = 10;
   const debouncedSearch = useDebounce(search, 500);
   const { isLoading, startLoading } = useLoading();
-  const pageSize = 10;
 
-  const fetchMajors = useCallback(async () => {
+  const fetchPrograms = useCallback(async () => {
     const res = await startLoading(() =>
-      majorService.getAllMajors({
+      programService.getAllPrograms({
         pageNumber: page,
         pageSize,
         search: debouncedSearch,
@@ -55,61 +55,64 @@ const MajorManagement = () => {
         isDelete: deletedFilter,
       })
     );
-    setMajors(res.items);
+    setPrograms(res.items);
     setTotalPages(res.totalPages);
   }, [page, pageSize, debouncedSearch, startLoading, sortBy, deletedFilter]);
 
   const handleOpenDetail = useCallback(async (id: string) => {
     try {
-      const data = await majorService.getMajorById(id);
-      setSelectedMajor(data);
+      const data = await programService.getProgramById(id);
+      setSelectedProgram(data);
       setOpenDetail(true);
     } catch {
-      toast.error("Failed to load major details");
+      toast.error("Failed to load program details");
     }
   }, []);
 
-  const handleDeleteMajor = async (id: string) => {
+  const handleDelete = async (id: string) => {
     try {
-      await majorService.deleteMajor(id);
-      toast.success("Major deleted successfully!");
-      await fetchMajors();
+      await programService.deleteProgram(id);
+      toast.success("Program deleted successfully!");
+      await fetchPrograms();
     } catch {
-      toast.error("Failed to delete major. Try again later.");
+      toast.error("Failed to delete Program. Try again later.");
     }
   };
 
   useEffect(() => {
-    const id = new URLSearchParams(location.search).get("id");
+    const params = new URLSearchParams(location.search);
+    const id = params.get("id");
 
-    if (id && (!openDetail || selectedMajor?.majorId !== id)) {
+    if (id && (!openDetail || selectedProgram?.programId !== id)) {
       handleOpenDetail(id);
     }
 
     if (!id && openDetail) {
       setOpenDetail(false);
-      setSelectedMajor(null);
+      setSelectedProgram(null);
     }
-  }, [location.search, openDetail, selectedMajor, handleOpenDetail]);
+  }, [location.search, openDetail, selectedProgram, handleOpenDetail]);
 
   useEffect(() => {
-    fetchMajors();
-  }, [fetchMajors]);
+    fetchPrograms();
+  }, [fetchPrograms]);
 
   return (
     <div className="bg-white p-5 shadow-md rounded-2xl">
-      <h1 className="text-2xl font-bold text-blue-500 mb-4">Major Management</h1>
+      <h1 className="text-2xl font-bold text-blue-500 mb-4">Program Management</h1>
 
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
-              <Link to="/admin/dashboard">Home</Link>
+              <Link to="/admin/dashboard" className="text-blue-600 hover:underline">
+                Home
+              </Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbLink>Majors</BreadcrumbLink>
+            <BreadcrumbLink>Programs</BreadcrumbLink>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
@@ -135,8 +138,7 @@ const MajorManagement = () => {
             <SelectItem value="true">Deleted</SelectItem>
           </SelectContent>
         </Select>
-
-        <ModalCreateMajor onSuccess={fetchMajors} />
+        <ProgramCreateDialog onSuccess={fetchPrograms} />
       </div>
 
       <div className="rounded-lg border overflow-x-auto">
@@ -155,21 +157,21 @@ const MajorManagement = () => {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-10 text-blue-500 animate-pulse">
-                  Loading...
+                <TableCell colSpan={9} className="text-center py-10">
+                  <span className="text-blue-500 animate-pulse">Loading...</span>
                 </TableCell>
               </TableRow>
-            ) : majors.length > 0 ? (
-              majors.map((major, i) => (
-                <TableRow key={major.majorId}>
+            ) : programs.length > 0 ? (
+              programs.map((program, i) => (
+                <TableRow key={program.programCode}>
                   <TableCell>{(page - 1) * pageSize + i + 1}</TableCell>
-                  <TableCell>{major.majorCode}</TableCell>
-                  <TableCell>{major.majorName}</TableCell>
-                  <TableCell>{formatDateTime(major.startAt)}</TableCell>
-                  <TableCell>{formatDateTime(major.createdAt)}</TableCell>
-                  <TableCell>{formatDateTime(major.updatedAt)}</TableCell>
+                  <TableCell>{program.programCode}</TableCell>
+                  <TableCell>{program.programName}</TableCell>
+                  <TableCell>{formatDateTime(program.startAt)}</TableCell>
+                  <TableCell>{formatDateTime(program.createdAt)}</TableCell>
+                  <TableCell>{formatDateTime(program.updatedAt)}</TableCell>
                   <TableCell className="flex gap-2">
-                    <ConfirmDeleteDialog onConfirm={() => handleDeleteMajor(major.majorId)}>
+                    <ConfirmDeleteDialog onConfirm={() => handleDelete(program.programId)}>
                       <Trash2 size={16} color="red" className="cursor-pointer" />
                     </ConfirmDeleteDialog>
                     <BadgeInfo
@@ -177,7 +179,7 @@ const MajorManagement = () => {
                       color="blue"
                       className="cursor-pointer"
                       onClick={() => {
-                        navigate(`/admin/major?id=${major.majorId}`);
+                        navigate(`/admin/program?id=${program.programId}`);
                       }}
                     />
                   </TableCell>
@@ -185,8 +187,8 @@ const MajorManagement = () => {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={6} className="text-center text-gray-400">
-                  No majors found.
+                <TableCell colSpan={9} className="text-center text-gray-400">
+                  Result is not found.
                 </TableCell>
               </TableRow>
             )}
@@ -194,11 +196,11 @@ const MajorManagement = () => {
         </Table>
       </div>
 
-      <div className="flex mt-8">
+      <div className="flex justify-end mt-8">
         <Pagination className="ml-auto">
           <PaginationContent>
             <PaginationItem>
-              <PaginationPrevious href="#" onClick={() => setPage((prev) => Math.max(prev - 1, 1))} />
+              <PaginationPrevious href="#" onClick={() => setPage((p) => Math.max(p - 1, 1))} />
             </PaginationItem>
             {Array.from({ length: totalPages }).map((_, i) => (
               <PaginationItem key={i}>
@@ -208,19 +210,20 @@ const MajorManagement = () => {
               </PaginationItem>
             ))}
             <PaginationItem>
-              <PaginationNext href="#" onClick={() => setPage((prev) => Math.min(prev + 1, totalPages))} />
+              <PaginationNext href="#" onClick={() => setPage((p) => Math.min(p + 1, totalPages))} />
             </PaginationItem>
           </PaginationContent>
         </Pagination>
       </div>
-      <ModalEditMajor
+
+      <ProgramEditDialog
         open={openDetail}
-        major={selectedMajor}
-        onSuccess={fetchMajors}
+        program={selectedProgram}
+        onSuccess={fetchPrograms}
         onOpenChange={(open) => {
           setOpenDetail(open);
           if (!open) {
-            navigate("/admin/major", { replace: true });
+            navigate("/admin/program", { replace: true });
           }
         }}
       />
@@ -228,4 +231,4 @@ const MajorManagement = () => {
   );
 };
 
-export default MajorManagement;
+export default ProgramManagement;

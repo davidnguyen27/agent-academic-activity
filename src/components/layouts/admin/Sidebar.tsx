@@ -1,29 +1,30 @@
 import { useState } from "react";
 import {
-  Home,
   GraduationCap,
-  Users,
-  BookOpen,
-  Settings,
   Menu,
   BookOpenText,
-  Sheet,
-  ClipboardCheck,
-  Wrench,
+  Archive,
+  Layers,
+  Settings2,
+  Brain,
+  LayoutDashboard,
+  ScrollText,
+  ClipboardList,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "react-router-dom";
 
 const navItems = [
-  { label: "Dashboard", icon: Home, to: "/admin/dashboard" },
+  { label: "Dashboard", icon: LayoutDashboard, to: "/admin/dashboard" },
   { label: "Students", icon: GraduationCap, to: "/admin/student" },
   { label: "Subjects", icon: BookOpenText, to: "/admin/subject" },
-  { label: "Curriculums", icon: Sheet, to: "/admin/curriculum" },
-  { label: "Assessments", icon: ClipboardCheck, to: "/admin/assessment" },
-  { label: "Materials", icon: Users, to: "/admin/material" },
-  { label: "Tools", icon: Wrench, to: "/admin/tool" },
-  { label: "Majors", icon: BookOpen, to: "/admin/major" },
-  { label: "Settings", icon: Settings, to: "#" },
+  { label: "Curriculums", icon: ScrollText, to: "/admin/curriculum" },
+  { label: "Assessments", icon: ClipboardList, to: "/admin/assessment" },
+  { label: "Materials", icon: Archive, to: "/admin/material" },
+  { label: "Tools", icon: Settings2, to: "/admin/tool" },
+  { label: "Majors", icon: Layers, to: "/admin/major" },
+  { label: "Program", icon: Brain, to: "/admin/program" },
+  { label: "Combo", icon: Brain, to: "/admin/combo" },
 ];
 
 const SideBar = () => {

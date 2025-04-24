@@ -24,8 +24,9 @@ import ToolEditDialog from "@/components/layouts/admin/tools/ModalEdit";
 import { toolService } from "@/services/tool.service";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useLoading } from "@/hooks/useLoading";
-import { formatDate } from "@/utils/format/date.format";
 import { toast } from "sonner";
+import ConfirmDeleteDialog from "@/components/layouts/admin/ModalConfirm";
+import { formatDateTime } from "@/utils/format/date-time.format";
 
 const ToolManagement = () => {
   const navigate = useNavigate();
@@ -69,7 +70,6 @@ const ToolManagement = () => {
   }, []);
 
   const handleDeleteTool = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this tool?")) return;
     try {
       await toolService.deleteTool(id);
       toast.success("Tool deleted successfully!");
@@ -170,17 +170,14 @@ const ToolManagement = () => {
                   <TableCell>{tool.toolCode}</TableCell>
                   <TableCell>{tool.toolName}</TableCell>
                   <TableCell>{tool.description}</TableCell>
-                  <TableCell>{formatDate(tool.publishedDate)}</TableCell>
+                  <TableCell>{formatDateTime(tool.publishedDate)}</TableCell>
                   <TableCell>{tool.author}</TableCell>
                   <TableCell>{tool.publisher}</TableCell>
                   <TableCell>{tool.note}</TableCell>
                   <TableCell className="flex gap-2">
-                    <Trash2
-                      size={16}
-                      color="red"
-                      className="cursor-pointer"
-                      onClick={() => handleDeleteTool(tool.toolId)}
-                    />
+                    <ConfirmDeleteDialog onConfirm={() => handleDeleteTool(tool.toolId)}>
+                      <Trash2 size={16} color="red" className="cursor-pointer" />
+                    </ConfirmDeleteDialog>
                     <BadgeInfo
                       size={16}
                       color="blue"

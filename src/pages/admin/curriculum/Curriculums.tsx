@@ -26,6 +26,7 @@ import { majorService } from "@/services/major.service";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useLoading } from "@/hooks/useLoading";
 import { Button } from "@/components/ui/button";
+import ConfirmDeleteDialog from "@/components/layouts/admin/ModalConfirm";
 
 const CurriculumManagement = () => {
   const navigate = useNavigate();
@@ -169,29 +170,27 @@ const CurriculumManagement = () => {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center text-blue-500 py-6">
-                  Loading...
+                <TableCell colSpan={9} className="text-center py-10">
+                  <span className="text-blue-500 animate-pulse">Loading...</span>
                 </TableCell>
               </TableRow>
             ) : curriculums.length > 0 ? (
-              curriculums.map((c, i) => (
-                <TableRow key={c.curriculumCode}>
-                  <TableCell>{(page - 1) * pageSize + i + 1}</TableCell>
-                  <TableCell>{c.curriculumCode}</TableCell>
-                  <TableCell>{c.curriculumName}</TableCell>
-                  <TableCell>{c.decisionNo}</TableCell>
-                  <TableCell>{majorMap.get(c.majorId)}</TableCell>
-                  <TableCell>{c.isApproved ? "Yes" : "No"}</TableCell>
+              curriculums.map((curriculum, index) => (
+                <TableRow key={curriculum.curriculumCode}>
+                  <TableCell>{(page - 1) * pageSize + index + 1}</TableCell>
+                  <TableCell>{curriculum.curriculumCode}</TableCell>
+                  <TableCell>{curriculum.curriculumName}</TableCell>
+                  <TableCell>{curriculum.decisionNo}</TableCell>
+                  <TableCell>{majorMap.get(curriculum.majorId)}</TableCell>
+                  <TableCell>{curriculum.isApproved ? "Yes" : "No"}</TableCell>
                   <TableCell className="flex gap-2">
-                    <Trash2
-                      size={16}
-                      className="cursor-pointer text-red-500"
-                      onClick={() => handleDelete(c.curriculumId)}
-                    />
+                    <ConfirmDeleteDialog onConfirm={() => handleDelete(curriculum.curriculumId)}>
+                      <Trash2 size={16} className="cursor-pointer text-red-500" />
+                    </ConfirmDeleteDialog>
                     <BadgeInfo
                       size={16}
                       className="cursor-pointer text-blue-500"
-                      onClick={() => navigate(`/admin/curriculum/details?id=${c.curriculumId}`)}
+                      onClick={() => navigate(`/admin/curriculum/details?id=${curriculum.curriculumId}`)}
                     />
                   </TableCell>
                 </TableRow>

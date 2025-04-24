@@ -21,7 +21,7 @@ const ConfirmDeleteDialog = ({ onConfirm, children }: Props) => {
       <AlertDialogTrigger asChild>{children}</AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Are you sure you want to delete this major?</AlertDialogTitle>
+          <AlertDialogTitle>Are you sure you want to delete?</AlertDialogTitle>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>

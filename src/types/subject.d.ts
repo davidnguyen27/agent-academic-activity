@@ -1,4 +1,5 @@
 interface Subject {
+  subjectId: string;
   subjectCode: string;
   subjectName: string;
   decisionNo: string;
@@ -16,5 +17,8 @@ interface Subject {
   scoringScale: number;
   minAvgMarkToPass: number;
   note: string;
-  toolIds: [string];
+  createdAt?: string;
+  updatedAt?: string;
+  deletedAt?: string;
+  isDelete?: boolean;
 }

@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
@@ -19,16 +19,101 @@ import {
   BreadcrumbList,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import { BadgeInfo, CirclePlus, Trash2 } from "lucide-react";
+import { BadgeInfo, Trash2 } from "lucide-react";
+import { useDebounce } from "@/hooks/useDebounce";
+import { useLoading } from "@/hooks/useLoading";
+import { curriculumService } from "@/services/curriculum.service";
+import { subjectService } from "@/services/subject.service";
+import { toast } from "sonner";
+import ConfirmDeleteDialog from "@/components/layouts/admin/ModalConfirm";
 
 const SubjectManagement = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const [subjects, setSubjects] = useState<Subject[]>([]);
+  const [curriculums, setCurriculums] = useState<Curriculum[]>([]);
+  const [search, setSearch] = useState("");
+  const [sortBy, setSortBy] = useState<"code" | "name" | "default">("default");
+  const [deletedFilter, setDeletedFilter] = useState(false);
+  const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
+  const [openDetail, setOpenDetail] = useState(false);
+  const [totalPages, setTotalPages] = useState(1);
   const [page, setPage] = useState(1);
-  const totalPages = 5;
+
+  const debouncedSearch = useDebounce(search, 500);
+  const { isLoading, startLoading } = useLoading();
+  const pageSize = 10;
+
+  // Tạo Map curriculumId -> curriculumCode
+  const curriculumMap = useMemo(() => {
+    const map = new Map<string, string>();
+    curriculums.forEach((c) => map.set(c.curriculumId, c.curriculumCode));
+    return map;
+  }, [curriculums]);
+
+  // Gọi danh sách curriculum một lần
+  useEffect(() => {
+    curriculumService.getAllCurriculums({ pageSize: 1000 }).then((res) => {
+      setCurriculums(res.items);
+    });
+  }, []);
+
+  // Gọi danh sách subject
+  const fetchSubjects = useCallback(async () => {
+    const res = await startLoading(() =>
+      subjectService.getAllSubjects({
+        pageNumber: page,
+        pageSize,
+        search: debouncedSearch,
+        sortBy: sortBy === "default" ? undefined : sortBy,
+        isDelete: deletedFilter,
+      })
+    );
+    setSubjects(res.items);
+    setTotalPages(res.totalPages);
+  }, [page, pageSize, debouncedSearch, startLoading, sortBy, deletedFilter]);
+
+  const handleOpenDetail = useCallback(async (id: string) => {
+    try {
+      const data = await subjectService.getSubjectById(id);
+      setSelectedSubject(data);
+      setOpenDetail(true);
+    } catch {
+      toast.error("Failed to load subject details");
+    }
+  }, []);
+
+  const handleDelete = async (id: string) => {
+    try {
+      await subjectService.deleteSubject(id);
+      toast.success("Curriculum deleted successfully!");
+      await fetchSubjects();
+    } catch {
+      toast.error("Failed to delete subject");
+    }
+  };
+
+  useEffect(() => {
+    const id = new URLSearchParams(location.search).get("id");
+
+    if (id && (!openDetail || selectedSubject?.subjectId !== id)) {
+      handleOpenDetail(id);
+    }
+
+    if (!id && openDetail) {
+      setOpenDetail(false);
+      setSelectedSubject(null);
+    }
+  }, [location.search, openDetail, selectedSubject, handleOpenDetail]);
+
+  useEffect(() => {
+    fetchSubjects();
+  }, [fetchSubjects]);
 
   return (
     <div className="bg-white p-5 shadow-md rounded-2xl">
-      <h1 className="text-2xl font-bold text-blue-900 mb-4">Subjects</h1>
+      <h1 className="text-2xl font-bold text-blue-500 mb-4">Subject Management</h1>
 
       <Breadcrumb>
         <BreadcrumbList>
@@ -45,25 +130,27 @@ const SubjectManagement = () => {
       </Breadcrumb>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 my-6">
-        <Input placeholder="Search by name..." />
-        <Select>
+        <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by name..." />
+        <Select onValueChange={(value) => setSortBy(value as "code" | "name" | "default")}>
           <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Filter" />
+            <SelectValue placeholder="Sort by field" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="desc">Sort descending by code</SelectItem>
-            <SelectItem value="asc">Sort ascending by name</SelectItem>
-            <SelectItem value="disapproved">Disapproved</SelectItem>
+            <SelectItem value="default">Default</SelectItem>
+            <SelectItem value="code">Sort by Code</SelectItem>
+            <SelectItem value="name">Sort by Name</SelectItem>
           </SelectContent>
         </Select>
-        <Button
-          variant="destructive"
-          className="flex items-center gap-2"
-          onClick={() => navigate("/admin/subject/create")}
-        >
-          <CirclePlus size={20} color="white" />
-          Add a subject
-        </Button>
+        <Select onValueChange={(value) => setDeletedFilter(value === "true")}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Active or Deleted" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="false">Active</SelectItem>
+            <SelectItem value="true">Deleted</SelectItem>
+          </SelectContent>
+        </Select>
+        <Button onClick={() => navigate("/admin/subject/create")}>Add a Subject</Button>
       </div>
 
       <div className="rounded-lg border overflow-x-auto">
@@ -75,29 +162,49 @@ const SubjectManagement = () => {
               <TableHead>Name</TableHead>
               <TableHead>Approved Date</TableHead>
               <TableHead>Syllabus Name</TableHead>
-              <TableHead>Curriculum Name</TableHead>
+              <TableHead>Curriculum Code</TableHead>
               <TableHead>DecisionNo</TableHead>
               <TableHead>IsApproved</TableHead>
               <TableHead>Action</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {[...Array(10)].map((_, i) => (
-              <TableRow key={i} className="hover:bg-blue-50">
-                <TableCell>{(page - 1) * 10 + i + 1}</TableCell>
-                <TableCell>SWP391</TableCell>
-                <TableCell>Software Development Project</TableCell>
-                <TableCell>02/05/2001</TableCell>
-                <TableCell>Syllabus Name</TableCell>
-                <TableCell>Curriculum Name</TableCell>
-                <TableCell>DEC2024</TableCell>
-                <TableCell>{i % 2 === 0 ? "Yes" : "No"}</TableCell>
-                <TableCell className="flex items-center gap-2">
-                  <Trash2 size={16} color="red" className="cursor-pointer" />
-                  <BadgeInfo size={16} color="blue" className="cursor-pointer" />
+            {isLoading ? (
+              <TableRow>
+                <TableCell colSpan={9} className="text-center py-10">
+                  <span className="text-blue-500 animate-pulse">Loading...</span>
                 </TableCell>
               </TableRow>
-            ))}
+            ) : subjects.length > 0 ? (
+              subjects.map((subject, index) => (
+                <TableRow key={subject.subjectCode}>
+                  <TableCell>{(page - 1) * pageSize + index + 1}</TableCell>
+                  <TableCell>{subject.subjectCode}</TableCell>
+                  <TableCell>{subject.subjectName}</TableCell>
+                  <TableCell>{subject.approvedDate}</TableCell>
+                  <TableCell>{subject.syllabusName}</TableCell>
+                  <TableCell>{curriculumMap.get(subject.curriculumId)}</TableCell>
+                  <TableCell>{subject.decisionNo}</TableCell>
+                  <TableCell>{subject.isApproved ? "Yes" : "No"}</TableCell>
+                  <TableCell className="flex gap-2">
+                    <ConfirmDeleteDialog onConfirm={() => handleDelete(subject.subjectId)}>
+                      <Trash2 size={16} className="cursor-pointer text-red-500" />
+                    </ConfirmDeleteDialog>
+                    <BadgeInfo
+                      size={16}
+                      className="cursor-pointer text-blue-500"
+                      onClick={() => navigate(`/admin/subject/details?id=${subject.subjectId}`)}
+                    />
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={7} className="text-center text-gray-400">
+                  No subjects found.
+                </TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </Table>
       </div>
@@ -106,7 +213,7 @@ const SubjectManagement = () => {
         <Pagination className="ml-auto">
           <PaginationContent>
             <PaginationItem>
-              <PaginationPrevious href="#" onClick={() => setPage((prev) => Math.max(prev - 1, 1))} />
+              <PaginationPrevious href="#" onClick={() => setPage((p) => Math.max(p - 1, 1))} />
             </PaginationItem>
             {Array.from({ length: totalPages }).map((_, i) => (
               <PaginationItem key={i}>
@@ -116,7 +223,7 @@ const SubjectManagement = () => {
               </PaginationItem>
             ))}
             <PaginationItem>
-              <PaginationNext href="#" onClick={() => setPage((prev) => Math.min(prev + 1, totalPages))} />
+              <PaginationNext href="#" onClick={() => setPage((p) => Math.min(p + 1, totalPages))} />
             </PaginationItem>
           </PaginationContent>
         </Pagination>

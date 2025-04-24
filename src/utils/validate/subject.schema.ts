@@ -3,22 +3,22 @@ import { z } from "zod";
 export const subjectSchema = z.object({
   subjectCode: z.string().min(1, "Subject code is required"),
   subjectName: z.string().min(1, "Subject name is required"),
-  decisionNo: z.string().optional(),
+  decisionNo: z.string().min(1, "Decision No is required"),
   isActive: z.boolean(),
   isApproved: z.boolean(),
-  noCredit: z.coerce.number().min(0),
-  approvedDate: z.string().optional(),
-  curriculumId: z.string().optional(),
-  sessionNo: z.coerce.number().min(0),
-  syllabusName: z.string().optional(),
-  degreeLevel: z.string().optional(),
-  timeAllocation: z.string().optional(),
-  description: z.string().optional(),
-  studentTasks: z.string().optional(),
-  scoringScale: z.coerce.number().min(0),
-  minAvgMarkToPass: z.coerce.number().min(0),
-  note: z.string().optional(),
-  toolIds: z.array(z.string()).optional(),
+  noCredit: z.number().min(0, "Credits must be >= 0"),
+  approvedDate: z.string().min(1, "Approved Date is required"),
+  curriculumId: z.string().min(1, "Curriculum ID is required"),
+  sessionNo: z.number().min(0, "Session number must be >= 0"),
+  syllabusName: z.string().min(1, "Syllabus name is required"),
+  degreeLevel: z.string().min(1, "Degree level is required"),
+  timeAllocation: z.string().min(1, "Time allocation is required"),
+  description: z.string().min(1, "Description is required"),
+  studentTasks: z.string().min(1, "Student tasks are required"),
+  scoringScale: z.number().min(0, "Scoring scale must be >= 0"),
+  minAvgMarkToPass: z.number().min(0, "Minimum average mark must be >= 0"),
+  note: z.string().min(1, "Note is required"),
 });
 
-export type SubjectFormValues = z.infer<typeof subjectSchema>;
+export type SubjectFormData = z.infer<typeof subjectSchema>;
+export type SubjectInput = Omit<Subject, "subjectId">;

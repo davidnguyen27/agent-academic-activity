@@ -6,11 +6,14 @@ import AdminLayout from "@/layouts/admin/Layout";
 const Dashboard = lazy(() => import("@/pages/admin/dashboard/Dashboard"));
 const ToolManagement = lazy(() => import("@/pages/admin/tool/Tools"));
 const SubjectManagement = lazy(() => import("@/pages/admin/subject/Subjects"));
+const SubjectCreate = lazy(() => import("@/pages/admin/subject/CreateSubject"));
 const StudentManagement = lazy(() => import("@/pages/admin/student/Students"));
 const MajorManagement = lazy(() => import("@/pages/admin/major/Majors"));
 const CurriculumManagement = lazy(() => import("@/pages/admin/curriculum/Curriculums"));
 const CurriculumCreate = lazy(() => import("@/pages/admin/curriculum/CreateCurriculum"));
 const EditCurriculum = lazy(() => import("@/pages/admin/curriculum/EditCurriculum"));
+const ProgramManagement = lazy(() => import("@/pages/admin/program/Programs"));
+const ComboManagement = lazy(() => import("@/pages/admin/combo/Combos"));
 
 const AdminRoutes = (
   <Route
@@ -24,7 +27,7 @@ const AdminRoutes = (
     <Route
       path="dashboard"
       element={
-        <Suspense fallback={<div className="p-4 text-center">Loading Dashboard...</div>}>
+        <Suspense>
           <Dashboard />
         </Suspense>
       }
@@ -32,7 +35,7 @@ const AdminRoutes = (
     <Route
       path="tool"
       element={
-        <Suspense fallback={<div className="p-4 text-center">Loading Tools...</div>}>
+        <Suspense>
           <ToolManagement />
         </Suspense>
       }
@@ -40,15 +43,23 @@ const AdminRoutes = (
     <Route
       path="subject"
       element={
-        <Suspense fallback={<div className="p-4 text-center">Loading Subjects...</div>}>
+        <Suspense>
           <SubjectManagement />
+        </Suspense>
+      }
+    />
+    <Route
+      path="subject/create"
+      element={
+        <Suspense>
+          <SubjectCreate />
         </Suspense>
       }
     />
     <Route
       path="student"
       element={
-        <Suspense fallback={<div className="p-4 text-center">Loading Students...</div>}>
+        <Suspense>
           <StudentManagement />
         </Suspense>
       }
@@ -56,7 +67,7 @@ const AdminRoutes = (
     <Route
       path="major"
       element={
-        <Suspense fallback={<div className="p-4 text-center">Loading Majors...</div>}>
+        <Suspense>
           <MajorManagement />
         </Suspense>
       }
@@ -64,7 +75,7 @@ const AdminRoutes = (
     <Route
       path="curriculum"
       element={
-        <Suspense fallback={<div className="p-4 text-center">Loading Curriculums...</div>}>
+        <Suspense>
           <CurriculumManagement />
         </Suspense>
       }
@@ -72,7 +83,7 @@ const AdminRoutes = (
     <Route
       path="curriculum/create"
       element={
-        <Suspense fallback={<div className="p-4 text-center">Loading...</div>}>
+        <Suspense>
           <CurriculumCreate />
         </Suspense>
       }
@@ -80,8 +91,24 @@ const AdminRoutes = (
     <Route
       path="curriculum/details"
       element={
-        <Suspense fallback={<div className="p-4 text-center">Loading...</div>}>
+        <Suspense>
           <EditCurriculum />
+        </Suspense>
+      }
+    />
+    <Route
+      path="program"
+      element={
+        <Suspense>
+          <ProgramManagement />
+        </Suspense>
+      }
+    />
+    <Route
+      path="combo"
+      element={
+        <Suspense>
+          <ComboManagement />
         </Suspense>
       }
     />
