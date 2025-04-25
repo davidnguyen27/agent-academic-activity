@@ -1,22 +1,8 @@
-import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import {
   Pagination,
@@ -34,35 +20,34 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { Search, FileText, Home } from "lucide-react";
-import { toast } from "sonner";
+
+const mockCurriculum = [
+  {
+    curriculumId: "1",
+    curriculumCode: "CURR001",
+    curriculumName: "Software Engineering 2024",
+    decisionNo: "QD-2024-001",
+    isActive: true,
+  },
+  {
+    curriculumId: "2",
+    curriculumCode: "CURR002",
+    curriculumName: "Artificial Intelligence 2023",
+    decisionNo: "QD-2023-012",
+    isActive: false,
+  },
+  {
+    curriculumId: "3",
+    curriculumCode: "CURR003",
+    curriculumName: "Information Systems 2022",
+    decisionNo: "QD-2022-045",
+    isActive: true,
+  },
+];
 
 const ListCurriculum = () => {
-  const [Curriculum, setCurriculum] = useState<Curriculum[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [search, setSearch] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-
-  useEffect(() => {
-    const fetchCurriculum = async () => {
-      try {
-        setLoading(true);
-        // Replace with your actual API endpoint
-        const response = await fetch(`/api/curriculum?search=${search}&page=${currentPage}`);
-        const data = await response.json();
-        setCurriculum(data.items);
-        setTotalPages(Math.ceil(data.total / 10));
-      } catch (error) {
-        toast.error("Failed to load Curriculum", {
-          description: "An error occurred while fetching the data."
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchCurriculum();
-  }, [search, currentPage, toast]);
+  const currentPage = 1;
+  const totalPages = 1;
 
   return (
     <div className="container mx-auto p-6">
@@ -70,7 +55,9 @@ const ListCurriculum = () => {
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
-              <Link to="/home"><Home className="h-4 w-4" /></Link>
+              <Link to="/home">
+                <Home className="h-4 w-4" />
+              </Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
@@ -93,19 +80,13 @@ const ListCurriculum = () => {
           <div className="flex gap-4 mb-6">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search Curriculum..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-9"
-              />
+              <Input placeholder="Search Curriculum..." className="pl-9" />
             </div>
             <Select defaultValue="all">
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Select Major" />
               </SelectTrigger>
               <SelectContent>
-                // Add major functionality here
                 <SelectItem value="all">All Majors</SelectItem>
                 <SelectItem value="se">Software Engineering</SelectItem>
                 <SelectItem value="ai">Artificial Intelligence</SelectItem>
@@ -126,48 +107,29 @@ const ListCurriculum = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {loading ? (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center py-10">
-                      Loading...
+                {mockCurriculum.map((curriculum) => (
+                  <TableRow key={curriculum.curriculumId}>
+                    <TableCell className="font-medium">{curriculum.curriculumCode}</TableCell>
+                    <TableCell>{curriculum.curriculumName}</TableCell>
+                    <TableCell>{curriculum.decisionNo}</TableCell>
+                    <TableCell>
+                      <span
+                        className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium
+                          ${curriculum.isActive ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}
+                      >
+                        {curriculum.isActive ? "Active" : "Inactive"}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button variant="ghost" size="sm" asChild>
+                        <Link to={`/curriculum/${curriculum.curriculumId}`}>
+                          <FileText className="h-4 w-4 mr-2" />
+                          View
+                        </Link>
+                      </Button>
                     </TableCell>
                   </TableRow>
-                ) : Curriculum.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center py-10">
-                      No Curriculum found
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  Curriculum.map((curriculum) => (
-                    <TableRow key={curriculum.curriculumId}>
-                      <TableCell className="font-medium">
-                        {curriculum.curriculumCode}
-                      </TableCell>
-                      <TableCell>{curriculum.curriculumName}</TableCell>
-                      <TableCell>{curriculum.decisionNo}</TableCell>
-                      <TableCell>
-                        <span
-                          className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium
-                            ${curriculum.isActive 
-                              ? 'bg-green-100 text-green-700' 
-                              : 'bg-red-100 text-red-700'
-                            }`}
-                        >
-                          {curriculum.isActive ? 'Active' : 'Inactive'}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button variant="ghost" size="sm" asChild>
-                          <Link to={`/curriculum/${curriculum.curriculumId}`}>
-                            <FileText className="h-4 w-4 mr-2" />
-                            View
-                          </Link>
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
+                ))}
               </TableBody>
             </Table>
           </div>
@@ -179,28 +141,13 @@ const ListCurriculum = () => {
             <Pagination>
               <PaginationContent>
                 <PaginationItem>
-                  {currentPage > 1 && (
-                    <PaginationPrevious 
-                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                    />
-                  )}
+                  <PaginationPrevious />
                 </PaginationItem>
-                {Array.from({ length: totalPages }).map((_, i) => (
-                  <PaginationItem key={i}>
-                    <PaginationLink
-                      isActive={currentPage === i + 1}
-                      onClick={() => setCurrentPage(i + 1)}
-                    >
-                      {i + 1}
-                    </PaginationLink>
-                  </PaginationItem>
-                ))}
                 <PaginationItem>
-                  {currentPage < totalPages && (
-                    <PaginationNext
-                      onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                    />
-                  )}
+                  <PaginationLink isActive>{currentPage}</PaginationLink>
+                </PaginationItem>
+                <PaginationItem>
+                  <PaginationNext />
                 </PaginationItem>
               </PaginationContent>
             </Pagination>
