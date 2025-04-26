@@ -1,11 +1,7 @@
 import { z } from "zod";
 
 export const majorSchema = z.object({
-  majorCode: z
-    .string()
-    .min(1, "Major code is required")
-    .regex(/^([A-Z]{2,4}\d{3,5})$/, "Invalid format (e.g., IT2025)"),
-
+  majorCode: z.string().min(1, "Major code is required"),
   majorName: z.string().min(1, "Major name is required"),
 
   startAt: z

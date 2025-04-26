@@ -1,10 +1,7 @@
 import { z } from "zod";
 
 export const toolSchema = z.object({
-  toolCode: z
-    .string()
-    .min(1, "Tool code is required")
-    .regex(/^TL\d{3}$/, "Tool code must be in format TL### (e.g., TL001)"),
+  toolCode: z.string().min(1, "Tool code is required"),
   toolName: z.string().min(1, "Tool name is required"),
   author: z.string().min(1, "Author is required"),
   publisher: z.string().min(1, "Publisher is required"),

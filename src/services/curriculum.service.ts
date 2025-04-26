@@ -1,15 +1,6 @@
 import axiosInstance from "@/configs/axios.config";
 import { CurriculumInput } from "@/utils/validate/curriculum.schema";
 
-interface CurriculumParams {
-  pageNumber?: number;
-  pageSize?: number;
-  search?: string;
-  sortBy?: "name" | "code" | "default";
-  sortType?: "Ascending" | "Descending";
-  isDelete?: boolean;
-}
-
 export const curriculumService = {
   createCurriculum: async (data: CurriculumInput) => {
     const response = await axiosInstance.post("/api/curriculum/create-curriculum", data);
@@ -23,7 +14,7 @@ export const curriculumService = {
     sortBy = "code",
     sortType = "Ascending",
     isDelete = false,
-  }: CurriculumParams) => {
+  }: Params) => {
     const response = await axiosInstance.get("/api/curriculum/get-all-curriculums", {
       params: { pageNumber, pageSize, search, sortBy, sortType, isDelete },
     });

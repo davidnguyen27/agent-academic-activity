@@ -1,15 +1,6 @@
 import axiosInstance from "@/configs/axios.config";
 import { ProgramInput } from "@/utils/validate/program.schema";
 
-interface Params {
-  pageNumber: number;
-  pageSize: number;
-  search: string;
-  sortBy?: "name" | "code" | "default";
-  sortType?: "Ascending" | "Descending";
-  isDelete?: boolean;
-}
-
 export const programService = {
   createProgram: async (data: ProgramInput) => {
     const response = await axiosInstance.post("/api/program/create-program", data);

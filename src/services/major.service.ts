@@ -1,15 +1,6 @@
 import axiosInstance from "@/configs/axios.config";
 import { MajorInput } from "@/utils/validate/major.schema";
 
-interface MajorParams {
-  pageNumber?: number;
-  pageSize?: number;
-  search?: string;
-  sortBy?: "name" | "code" | "default";
-  sortType?: "Ascending" | "Descending";
-  isDelete?: boolean;
-}
-
 export const majorService = {
   createMajor: async (data: MajorInput) => {
     const response = await axiosInstance.post("/api/major/create-major", data);
@@ -23,7 +14,7 @@ export const majorService = {
     sortBy = "code",
     sortType = "Ascending",
     isDelete = false,
-  }: MajorParams) => {
+  }: Params) => {
     const response = await axiosInstance.get("/api/major/get-all-majors", {
       params: { pageNumber, pageSize, search, sortBy, sortType, isDelete },
     });

@@ -22,22 +22,21 @@ import {
 import { BadgeInfo, Trash2 } from "lucide-react";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useLoading } from "@/hooks/useLoading";
-import { curriculumService } from "@/services/curriculum.service";
 import { subjectService } from "@/services/subject.service";
 import { toast } from "sonner";
 import ConfirmDeleteDialog from "@/components/layouts/admin/ModalConfirm";
-import { formatDateTime } from "@/utils/format/date-time.format";
+import { assessmentService } from "@/services/assessment.service";
 
-const SubjectManagement = () => {
+const AssessmentManagement = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const [assessments, setAssessments] = useState<Assessment[]>([]);
   const [subjects, setSubjects] = useState<Subject[]>([]);
-  const [curriculums, setCurriculums] = useState<Curriculum[]>([]);
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<"code" | "name" | "default">("default");
   const [deletedFilter, setDeletedFilter] = useState(false);
-  const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
+  const [selectedAssessment, setSelectedAssessment] = useState<Assessment | null>(null);
   const [openDetail, setOpenDetail] = useState(false);
   const [totalPages, setTotalPages] = useState(1);
   const [page, setPage] = useState(1);
@@ -46,24 +45,24 @@ const SubjectManagement = () => {
   const { isLoading, startLoading } = useLoading();
   const pageSize = 10;
 
-  // Tạo Map curriculumId -> curriculumCode
-  const curriculumMap = useMemo(() => {
+  // Tạo Map subjectId -> subjectCode
+  const subjectMap = useMemo(() => {
     const map = new Map<string, string>();
-    curriculums.forEach((c) => map.set(c.curriculumId, c.curriculumCode));
+    subjects.forEach((a) => map.set(a.subjectId, a.subjectCode));
     return map;
-  }, [curriculums]);
+  }, [subjects]);
 
-  // Gọi danh sách curriculum một lần
+  // Gọi danh sách subject một lần
   useEffect(() => {
-    curriculumService.getAllCurriculums({ pageSize: 1000 }).then((res) => {
-      setCurriculums(res.items);
+    subjectService.getAllSubjects({ pageSize: 1000 }).then((res) => {
+      setSubjects(res.items);
     });
   }, []);
 
-  // Gọi danh sách subject
-  const fetchSubjects = useCallback(async () => {
+  // Gọi danh sách assessments
+  const fetchAssessments = useCallback(async () => {
     const res = await startLoading(() =>
-      subjectService.getAllSubjects({
+      assessmentService.getAllAssessments({
         pageNumber: page,
         pageSize,
         search: debouncedSearch,
@@ -71,57 +70,57 @@ const SubjectManagement = () => {
         isDelete: deletedFilter,
       })
     );
-    setSubjects(res.items);
+    setAssessments(res.items);
     setTotalPages(res.totalPages);
   }, [page, pageSize, debouncedSearch, startLoading, sortBy, deletedFilter]);
 
   const handleOpenDetail = useCallback(async (id: string) => {
     try {
-      const data = await subjectService.getSubjectById(id);
-      setSelectedSubject(data);
+      const data = await assessmentService.getAssessmentById(id);
+      setSelectedAssessment(data);
       setOpenDetail(true);
     } catch {
-      toast.error("Failed to load subject details");
+      toast.error("Failed to load assessment details");
     }
   }, []);
 
   const handleDelete = async (id: string) => {
     try {
-      await subjectService.deleteSubject(id);
-      toast.success("Curriculum deleted successfully!");
-      await fetchSubjects();
+      await assessmentService.deleteAssessment(id);
+      toast.success("Assessment deleted successfully!");
+      await fetchAssessments();
     } catch {
-      toast.error("Failed to delete subject");
+      toast.error("Failed to delete assessment");
     }
   };
 
   useEffect(() => {
     const id = new URLSearchParams(location.search).get("id");
 
-    if (id && (!openDetail || selectedSubject?.subjectId !== id)) {
+    if (id && (!openDetail || selectedAssessment?.assessmentId !== id)) {
       handleOpenDetail(id);
     }
 
     if (!id && openDetail) {
       setOpenDetail(false);
-      setSelectedSubject(null);
+      setSelectedAssessment(null);
     }
-  }, [location.search, openDetail, selectedSubject, handleOpenDetail]);
+  }, [location.search, openDetail, selectedAssessment, handleOpenDetail]);
+
+  // useEffect(() => {
+  //   if (location.state?.createdSubject) {
+  //     setSubjects((prev) => [location.state.createdSubject, ...prev]);
+  //     window.history.replaceState({}, document.title);
+  //   }
+  // }, [location.state]);
 
   useEffect(() => {
-    if (location.state?.createdSubject) {
-      setSubjects((prev) => [location.state.createdSubject, ...prev]);
-      window.history.replaceState({}, document.title);
-    }
-  }, [location.state]);
-
-  useEffect(() => {
-    fetchSubjects();
-  }, [fetchSubjects]);
+    fetchAssessments();
+  }, [fetchAssessments]);
 
   return (
     <div className="bg-white p-5 shadow-md rounded-2xl">
-      <h1 className="text-2xl font-bold text-blue-500 mb-4">Subject Management</h1>
+      <h1 className="text-2xl font-bold text-blue-500 mb-4">Assessment Management</h1>
 
       <Breadcrumb>
         <BreadcrumbList>
@@ -132,7 +131,7 @@ const SubjectManagement = () => {
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbLink>Subjects</BreadcrumbLink>
+            <BreadcrumbLink>Assessments</BreadcrumbLink>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
@@ -158,7 +157,9 @@ const SubjectManagement = () => {
             <SelectItem value="true">Deleted</SelectItem>
           </SelectContent>
         </Select>
-        <Button onClick={() => navigate("/admin/subject/create")}>Add a Subject</Button>
+        <Button variant="destructive" onClick={() => navigate("/admin/assessment/create")}>
+          Add a Assessment
+        </Button>
       </div>
 
       <div className="rounded-lg border overflow-x-auto">
@@ -166,13 +167,14 @@ const SubjectManagement = () => {
           <TableHeader>
             <TableRow>
               <TableHead>No.</TableHead>
-              <TableHead>Code</TableHead>
-              <TableHead>Name</TableHead>
-              <TableHead>Approved Date</TableHead>
-              <TableHead>Syllabus Name</TableHead>
-              <TableHead>Curriculum Code</TableHead>
-              <TableHead>DecisionNo</TableHead>
-              <TableHead>IsApproved</TableHead>
+              <TableHead>Category</TableHead>
+              <TableHead>Type</TableHead>
+              <TableHead>Subject Code</TableHead>
+              <TableHead>Knowledge & Skill</TableHead>
+              <TableHead>Grading Guide</TableHead>
+              <TableHead>Note</TableHead>
+              <TableHead>Created At</TableHead>
+              <TableHead>Updated At</TableHead>
               <TableHead>Action</TableHead>
             </TableRow>
           </TableHeader>
@@ -183,33 +185,34 @@ const SubjectManagement = () => {
                   <span className="text-blue-500 animate-pulse">Loading...</span>
                 </TableCell>
               </TableRow>
-            ) : subjects.length > 0 ? (
-              subjects.map((subject, index) => (
-                <TableRow key={subject.subjectCode}>
+            ) : assessments.length > 0 ? (
+              assessments.map((assessment, index) => (
+                <TableRow key={assessment.assessmentId}>
                   <TableCell>{(page - 1) * pageSize + index + 1}</TableCell>
-                  <TableCell>{subject.subjectCode}</TableCell>
-                  <TableCell>{subject.subjectName}</TableCell>
-                  <TableCell>{formatDateTime(subject.approvedDate)}</TableCell>
-                  <TableCell>{subject.syllabusName}</TableCell>
-                  <TableCell>{curriculumMap.get(subject.curriculumId)}</TableCell>
-                  <TableCell>{subject.decisionNo}</TableCell>
-                  <TableCell>{subject.isApproved ? "Yes" : "No"}</TableCell>
+                  <TableCell>{assessment.category}</TableCell>
+                  <TableCell>{assessment.type}</TableCell>
+                  <TableCell>{subjectMap.get(assessment.subjectId || "")}</TableCell>
+                  <TableCell>{assessment.knowledgeAndSkill}</TableCell>
+                  <TableCell>{assessment.gradingGuide}</TableCell>
+                  <TableCell>{assessment.note}</TableCell>
+                  <TableCell>{assessment.createdAt ? new Date(assessment.createdAt).toLocaleString() : "-"}</TableCell>
+                  <TableCell>{assessment.updatedAt ? new Date(assessment.updatedAt).toLocaleString() : "-"}</TableCell>
                   <TableCell className="flex gap-2">
-                    <ConfirmDeleteDialog onConfirm={() => handleDelete(subject.subjectId)}>
+                    <ConfirmDeleteDialog onConfirm={() => handleDelete(assessment.assessmentId)}>
                       <Trash2 size={16} className="cursor-pointer text-red-500" />
                     </ConfirmDeleteDialog>
                     <BadgeInfo
                       size={16}
                       className="cursor-pointer text-blue-500"
-                      onClick={() => navigate(`/admin/subject/details?id=${subject.subjectId}`)}
+                      onClick={() => navigate(`/admin/assessment/details?id=${assessment.assessmentId}`)}
                     />
                   </TableCell>
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={7} className="text-center text-gray-400">
-                  No subjects found.
+                <TableCell colSpan={9} className="text-center text-gray-400">
+                  No assessments found.
                 </TableCell>
               </TableRow>
             )}
@@ -240,4 +243,4 @@ const SubjectManagement = () => {
   );
 };
 
-export default SubjectManagement;
+export default AssessmentManagement;
