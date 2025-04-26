@@ -21,8 +21,23 @@ import {
 } from "@/components/ui/breadcrumb";
 import { Search, FileText, Home } from "lucide-react";
 
-const ListSubject = () => {
-  const [subjects, setSubjects] = useState<Subject[]>([]);
+interface Subject {
+  subjectCode: string;
+  subjectName: string;
+  noCredit: number;
+  decisionNo: string;
+  isActive: boolean;
+  description: string;
+  studentTasks: string;
+  timeAllocation: string;
+  scoringScale: number;
+  minAvgMarkToPass: number;
+  degreeLevel: string;
+}
+
+const DetailSubject = () => {
+  const { id } = useParams();
+  const [subject, setSubject] = useState<Subject>();
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -55,6 +70,7 @@ const ListSubject = () => {
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
+
 
       <h1 className="text-2xl font-bold mb-4">View Subjects</h1>
 

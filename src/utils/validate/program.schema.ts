@@ -1,10 +1,7 @@
 import { z } from "zod";
 
 export const programSchema = z.object({
-  programCode: z
-    .string()
-    .min(1, "Program code is required")
-    .regex(/^PG\d{3}$/, "Program code must be in format PG### (e.g., PG001)"),
+  programCode: z.string().min(1, "Program code is required"),
   programName: z.string().min(1, "Program name is required"),
   startAt: z
     .string()

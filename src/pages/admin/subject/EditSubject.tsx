@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { subjectSchema, SubjectFormData } from "@/utils/validate/subject.schema";
 import { curriculumService } from "@/services/curriculum.service";
 import { subjectService } from "@/services/subject.service";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -13,38 +13,54 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 
-const CreateSubject = () => {
+const EditSubject = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [curriculums, setCurriculums] = useState<Curriculum[]>([]);
+
+  const searchParams = new URLSearchParams(location.search);
+  const subjectId = searchParams.get("id");
+
   const form = useForm<SubjectFormData>({
     resolver: zodResolver(subjectSchema),
-    defaultValues: {
-      isActive: true,
-      isApproved: false,
-    },
   });
 
   useEffect(() => {
-    curriculumService.getAllCurriculums({ pageSize: 1000 }).then((res) => setCurriculums(res.items));
-  }, []);
+    const fetchData = async () => {
+      try {
+        const [curriculumRes, subjectRes] = await Promise.all([
+          curriculumService.getAllCurriculums({ pageSize: 1000 }),
+          subjectService.getSubjectById(subjectId!),
+        ]);
+        setCurriculums(curriculumRes.items);
+        form.reset(subjectRes);
+      } catch {
+        toast.error("Failed to fetch data");
+      }
+    };
+
+    if (subjectId) {
+      fetchData();
+    }
+  }, [subjectId, form]);
 
   const onSubmit = async (data: SubjectFormData) => {
     try {
-      const createdSubject = await subjectService.createSubject(data);
-      toast.success("Subject created successfully");
-      navigate("/admin/subject", { state: { createdSubject } });
+      await subjectService.updateSubject(subjectId!, data);
+      toast.success("Subject updated successfully");
+      navigate("/admin/subject");
     } catch {
-      toast.error("Failed to create subject");
+      toast.error("Failed to update subject");
     }
   };
 
   return (
     <div className="bg-white p-6 rounded-xl shadow-md">
-      <h2 className="text-2xl font-bold mb-6 text-blue-600">Create Subject</h2>
+      <h2 className="text-2xl font-bold mb-6 text-blue-600">Edit Subject</h2>
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-8">
-          {/* Group 1: Subject Information */}
+        <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Các field cơ bản */}
             <FormField
               name="subjectCode"
               control={form.control}
@@ -74,7 +90,6 @@ const CreateSubject = () => {
             />
           </div>
 
-          {/* Group 2: Decision and Curriculum */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <FormField
               name="decisionNo"
@@ -97,7 +112,7 @@ const CreateSubject = () => {
                 <FormItem>
                   <FormLabel>Approved Date</FormLabel>
                   <FormControl>
-                    <Input type="datetime-local" {...field} />
+                    <Input type="date" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -105,28 +120,46 @@ const CreateSubject = () => {
             />
           </div>
 
-          {/* Group 3: Curriculum & Degree */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <FormField
-              name="curriculumId"
+              name="noCredit"
               control={form.control}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Curriculum</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select curriculum..." />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {curriculums.map((c) => (
-                        <SelectItem key={c.curriculumId} value={c.curriculumId}>
-                          {c.curriculumName}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <FormLabel>Credits</FormLabel>
+                  <FormControl>
+                    <Input type="number" placeholder="e.g., 3" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              name="sessionNo"
+              control={form.control}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Session Number</FormLabel>
+                  <FormControl>
+                    <Input type="number" placeholder="e.g., 30" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <FormField
+              name="syllabusName"
+              control={form.control}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Syllabus Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g., Basic Programming Syllabus" {...field} />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
@@ -147,22 +180,15 @@ const CreateSubject = () => {
             />
           </div>
 
-          {/* Group 4: Numeric Fields */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <FormField
-              name="noCredit"
+              name="timeAllocation"
               control={form.control}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Credits</FormLabel>
+                  <FormLabel>Time Allocation</FormLabel>
                   <FormControl>
-                    <Input
-                      type="number"
-                      min={0}
-                      value={field.value ?? ""}
-                      onChange={(e) => field.onChange(e.target.valueAsNumber)}
-                      placeholder="e.g., 3"
-                    />
+                    <Input placeholder="e.g., 45 hours" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -170,25 +196,21 @@ const CreateSubject = () => {
             />
 
             <FormField
-              name="sessionNo"
+              name="studentTasks"
               control={form.control}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Session Number</FormLabel>
+                  <FormLabel>Student Tasks</FormLabel>
                   <FormControl>
-                    <Input
-                      type="number"
-                      min={0}
-                      value={field.value ?? ""}
-                      onChange={(e) => field.onChange(e.target.valueAsNumber)}
-                      placeholder="e.g., 45"
-                    />
+                    <Input placeholder="e.g., Assignments, Projects..." {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
+          </div>
 
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <FormField
               name="scoringScale"
               control={form.control}
@@ -196,13 +218,7 @@ const CreateSubject = () => {
                 <FormItem>
                   <FormLabel>Scoring Scale</FormLabel>
                   <FormControl>
-                    <Input
-                      type="number"
-                      min={0}
-                      value={field.value ?? ""}
-                      onChange={(e) => field.onChange(e.target.valueAsNumber)}
-                      placeholder="e.g., 10"
-                    />
+                    <Input type="number" placeholder="e.g., 10" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -214,15 +230,9 @@ const CreateSubject = () => {
               control={form.control}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Minimum Average Mark to Pass</FormLabel>
+                  <FormLabel>Minimum Average Mark To Pass</FormLabel>
                   <FormControl>
-                    <Input
-                      type="number"
-                      min={0}
-                      value={field.value ?? ""}
-                      onChange={(e) => field.onChange(e.target.valueAsNumber)}
-                      placeholder="e.g., 5"
-                    />
+                    <Input type="number" placeholder="e.g., 5" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -230,30 +240,26 @@ const CreateSubject = () => {
             />
           </div>
 
-          {/* Group 5: Descriptions */}
           <FormField
-            name="syllabusName"
+            name="curriculumId"
             control={form.control}
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Syllabus Name</FormLabel>
-                <FormControl>
-                  <Input placeholder="e.g., Basic Programming Syllabus" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            name="timeAllocation"
-            control={form.control}
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Time Allocation</FormLabel>
-                <FormControl>
-                  <Input placeholder="e.g., 45 hours" {...field} />
-                </FormControl>
+                <FormLabel>Curriculum</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select curriculum..." />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {curriculums.map((c) => (
+                      <SelectItem key={c.curriculumId} value={c.curriculumId}>
+                        {c.curriculumName}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <FormMessage />
               </FormItem>
             )}
@@ -274,35 +280,20 @@ const CreateSubject = () => {
           />
 
           <FormField
-            name="studentTasks"
-            control={form.control}
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Student Tasks</FormLabel>
-                <FormControl>
-                  <Textarea rows={3} placeholder="e.g., Assignments, Midterms..." {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
             name="note"
             control={form.control}
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Note</FormLabel>
                 <FormControl>
-                  <Textarea rows={2} placeholder="e.g., This subject requires basic knowledge in..." {...field} />
+                  <Textarea rows={3} placeholder="Additional notes..." {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
 
-          {/* Group 6: Switches */}
-          <div className="flex gap-8 pt-4">
+          <div className="flex gap-6">
             <FormField
               name="isActive"
               control={form.control}
@@ -329,10 +320,9 @@ const CreateSubject = () => {
             />
           </div>
 
-          {/* Submit Button */}
-          <div className="pt-6">
+          <div className="pt-4">
             <Button type="submit" disabled={form.formState.isSubmitting}>
-              {form.formState.isSubmitting ? "Creating..." : "Create Subject"}
+              {form.formState.isSubmitting ? "Updating..." : "Update Subject"}
             </Button>
           </div>
         </form>
@@ -341,4 +331,4 @@ const CreateSubject = () => {
   );
 };
 
-export default CreateSubject;
+export default EditSubject;

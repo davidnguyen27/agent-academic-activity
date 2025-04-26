@@ -10,6 +10,7 @@ import {
   LayoutDashboard,
   ScrollText,
   ClipboardList,
+  Boxes,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "react-router-dom";
@@ -24,7 +25,7 @@ const navItems = [
   { label: "Tools", icon: Settings2, to: "/admin/tool" },
   { label: "Majors", icon: Layers, to: "/admin/major" },
   { label: "Program", icon: Brain, to: "/admin/program" },
-  { label: "Combo", icon: Brain, to: "/admin/combo" },
+  { label: "Combo", icon: Boxes, to: "/admin/combo" },
 ];
 
 const SideBar = () => {

@@ -12,6 +12,26 @@ import {
 } from "@/components/ui/breadcrumb";
 import { Home, Book, GraduationCap } from "lucide-react";
 
+interface Curriculum {
+  curriculumCode: string;
+  curriculumName: string;
+  decisionNo: string;
+  description: string;
+}
+
+interface PLO {
+  id: string;
+  name: string;
+  description: string;
+}
+
+interface Subject {
+  subjectCode: string;
+  subjectName: string;
+  semester: number;
+  noCredit: number;
+  preRequisite?: string;
+}
 
 const DetailCurriculum = () => {
   const { id } = useParams();
@@ -21,18 +41,33 @@ const DetailCurriculum = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Replace with actual API calls
     const fetchData = async () => {
-      try {
-        setLoading(true);
-        // Fetch curriculum details
-        // Fetch PLOs
-        // Fetch subjects
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setLoading(false);
-      }
+      setLoading(true);
+      // Mock data
+      setCurriculum({
+        curriculumCode: "CSE2025",
+        curriculumName: "Computer Science Engineering",
+        decisionNo: "D2025-001",
+        description: "This curriculum focuses on computer science fundamentals and emerging technologies.",
+      });
+
+      setPlos([
+        { id: "1", name: "PLO1", description: "Apply knowledge of computing fundamentals." },
+        { id: "2", name: "PLO2", description: "Design and evaluate computer-based systems." },
+      ]);
+
+      setSubjects([
+        {
+          subjectCode: "CS101",
+          subjectName: "Introduction to Programming",
+          semester: 1,
+          noCredit: 3,
+          preRequisite: "",
+        },
+        { subjectCode: "CS102", subjectName: "Data Structures", semester: 2, noCredit: 4, preRequisite: "CS101" },
+      ]);
+
+      setLoading(false);
     };
 
     fetchData();
@@ -69,7 +104,7 @@ const DetailCurriculum = () => {
 
       <h1 className="text-2xl font-bold my-6">Curriculum Details</h1>
 
-      {/* Basic Information */}
+      {/* Curriculum Basic Information */}
       <Card className="mb-6">
         <CardContent className="p-6">
           <div className="grid gap-4">
@@ -93,7 +128,7 @@ const DetailCurriculum = () => {
         </CardContent>
       </Card>
 
-      {/* PLOs */}
+      {/* PLO List */}
       <Card className="mb-6">
         <CardHeader>
           <div className="flex items-center gap-2">
@@ -121,7 +156,7 @@ const DetailCurriculum = () => {
         </CardContent>
       </Card>
 
-      {/* Subjects */}
+      {/* Subjects List */}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -130,9 +165,7 @@ const DetailCurriculum = () => {
               <h2 className="text-xl font-semibold">Subjects</h2>
             </div>
             <Button variant="outline" asChild>
-              <Link to={`/user/curriculum/${id}/mapping`}>
-                View PLO Mapping
-              </Link>
+              <Link to={`/user/curriculum/${id}/mapping`}>View PLO Mapping</Link>
             </Button>
           </div>
         </CardHeader>
@@ -151,17 +184,14 @@ const DetailCurriculum = () => {
               {subjects.map((subject) => (
                 <TableRow key={subject.subjectCode}>
                   <TableCell className="font-medium">
-                    <Link 
-                      to={`/user/subject/${subject.subjectCode}`}
-                      className="text-blue-600 hover:underline"
-                    >
+                    <Link to={`/user/subject/${subject.subjectCode}`} className="text-blue-600 hover:underline">
                       {subject.subjectCode}
                     </Link>
                   </TableCell>
                   <TableCell>{subject.subjectName}</TableCell>
                   <TableCell>{subject.semester}</TableCell>
                   <TableCell>{subject.noCredit}</TableCell>
-                  <TableCell>{subject.preRequisite || 'None'}</TableCell>
+                  <TableCell>{subject.preRequisite || "None"}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

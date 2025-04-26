@@ -7,6 +7,7 @@ const Dashboard = lazy(() => import("@/pages/admin/dashboard/Dashboard"));
 const ToolManagement = lazy(() => import("@/pages/admin/tool/Tools"));
 const SubjectManagement = lazy(() => import("@/pages/admin/subject/Subjects"));
 const SubjectCreate = lazy(() => import("@/pages/admin/subject/CreateSubject"));
+const SubjectEdit = lazy(() => import("@/pages/admin/subject/EditSubject"));
 const StudentManagement = lazy(() => import("@/pages/admin/student/Students"));
 const MajorManagement = lazy(() => import("@/pages/admin/major/Majors"));
 const CurriculumManagement = lazy(() => import("@/pages/admin/curriculum/Curriculums"));
@@ -14,6 +15,12 @@ const CurriculumCreate = lazy(() => import("@/pages/admin/curriculum/CreateCurri
 const EditCurriculum = lazy(() => import("@/pages/admin/curriculum/EditCurriculum"));
 const ProgramManagement = lazy(() => import("@/pages/admin/program/Programs"));
 const ComboManagement = lazy(() => import("@/pages/admin/combo/Combos"));
+const MaterialManagement = lazy(() => import("@/pages/admin/material/Materials"));
+const MaterialCreate = lazy(() => import("@/pages/admin/material/CreateMaterial"));
+const MaterialEdit = lazy(() => import("@/pages/admin/material/EditMaterial"));
+const AssessmentManagement = lazy(() => import("@/pages/admin/assessment/Assessments"));
+const AssessmentCreate = lazy(() => import("@/pages/admin/assessment/CreateAssessment"));
+const AssessmentEdit = lazy(() => import("@/pages/admin/assessment/EditAssessment"));
 
 const AdminRoutes = (
   <Route
@@ -53,6 +60,14 @@ const AdminRoutes = (
       element={
         <Suspense>
           <SubjectCreate />
+        </Suspense>
+      }
+    />
+    <Route
+      path="subject/details"
+      element={
+        <Suspense>
+          <SubjectEdit />
         </Suspense>
       }
     />
@@ -109,6 +124,54 @@ const AdminRoutes = (
       element={
         <Suspense>
           <ComboManagement />
+        </Suspense>
+      }
+    />
+    <Route
+      path="material"
+      element={
+        <Suspense>
+          <MaterialManagement />
+        </Suspense>
+      }
+    />
+    <Route
+      path="material/create"
+      element={
+        <Suspense>
+          <MaterialCreate />
+        </Suspense>
+      }
+    />
+    <Route
+      path="material/details"
+      element={
+        <Suspense>
+          <MaterialEdit />
+        </Suspense>
+      }
+    />
+    <Route
+      path="assessment"
+      element={
+        <Suspense>
+          <AssessmentManagement />
+        </Suspense>
+      }
+    />
+    <Route
+      path="assessment/create"
+      element={
+        <Suspense>
+          <AssessmentCreate />
+        </Suspense>
+      }
+    />
+    <Route
+      path="assessment/details"
+      element={
+        <Suspense>
+          <AssessmentEdit />
         </Suspense>
       }
     />
