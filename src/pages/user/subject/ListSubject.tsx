@@ -1,7 +1,17 @@
-import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
-import { Card, CardHeader, CardContent } from "@/components/ui/card";
+import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Card, CardHeader, CardContent } from "@/components/ui/card";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import {
   Breadcrumb,
   BreadcrumbList,
@@ -9,34 +19,26 @@ import {
   BreadcrumbLink,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import { Home, Book } from "lucide-react";
+import { Search, FileText, Home } from "lucide-react";
 
-const DetailSubject = () => {
-  const { id } = useParams();
-  const [subject, setSubject] = useState<Subject>();
+const ListSubject = () => {
+  const [subjects, setSubjects] = useState<Subject[]>([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        // Replace with actual API call
-        // const response = await fetch(`/api/subjects/${id}`);
-        // const data = await response.json();
-        // setSubject(data);
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [id]);
-
-  if (loading) {
-    return <div>Loading...</div>;
-  }
+  const handleSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      setLoading(true);
+      // Replace with actual API call
+    } catch (error) {
+      console.error('Failed to search subjects:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="container mx-auto p-6">
@@ -44,99 +46,115 @@ const DetailSubject = () => {
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
-              <Link to="/user/home"><Home className="h-4 w-4" /></Link>
+              <Link to="/user"><Home className="h-4 w-4" /></Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbLink asChild>
-              <Link to="/user/subjects">Subjects</Link>
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbLink>{subject?.subjectCode}</BreadcrumbLink>
+            <BreadcrumbLink>View Subjects</BreadcrumbLink>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
 
-      <div className="flex justify-between items-center my-6">
-        <h1 className="text-2xl font-bold">{subject?.subjectName}</h1>
-        <Button variant="outline" asChild>
-          <Link to={`/user/syllabus/${subject?.subjectCode}`}>
-            View Syllabus
-          </Link>
-        </Button>
+      <h1 className="text-2xl font-bold mb-4">View Subjects</h1>
+
+      <div className="flex items-end gap-4 mb-6">
+        <div>
+          <label className="block text-sm font-medium mb-1">Subject Code:</label>
+          <div className="flex gap-2">
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Enter subject code..."
+              className="w-[146px]"
+            />
+            <Button onClick={handleSearch} className="bg-[#28a745] hover:bg-[#218838]">
+              Search
+            </Button>
+          </div>
+        </div>
       </div>
 
-      <Card className="mb-6">
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <Book className="h-5 w-5" />
-            <h2 className="text-xl font-semibold">Subject Details</h2>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <span className="font-semibold">Subject Code:</span>
-                <p>{subject?.subjectCode}</p>
-              </div>
-              <div>
-                <span className="font-semibold">Credits:</span>
-                <p>{subject?.noCredit}</p>
-              </div>
-              <div>
-                <span className="font-semibold">Decision No:</span>
-                <p>{subject?.decisionNo}</p>
-              </div>
-              <div>
-                <span className="font-semibold">Status:</span>
-                <p>
-                  <span
-                    className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium
-                      ${subject?.isActive ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}
-                  >
-                    {subject?.isActive ? "Active" : "Inactive"}
-                  </span>
-                </p>
-              </div>
-            </div>
+      {subjects.length > 0 && (
+        <span className="text-[#23AC68]">All {subjects.length} syllabus(es)</span>
+      )}
 
-            <div>
-              <span className="font-semibold">Description:</span>
-              <p className="mt-2 whitespace-pre-line">{subject?.description}</p>
-            </div>
-
-            <div>
-              <span className="font-semibold">Student Tasks:</span>
-              <p className="mt-2 whitespace-pre-line">{subject?.studentTasks}</p>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <span className="font-semibold">Time Allocation:</span>
-                <p>{subject?.timeAllocation}</p>
-              </div>
-              <div>
-                <span className="font-semibold">Scoring Scale:</span>
-                <p>{subject?.scoringScale}</p>
-              </div>
-              <div>
-                <span className="font-semibold">Min Mark to Pass:</span>
-                <p>{subject?.minAvgMarkToPass}</p>
-              </div>
-              <div>
-                <span className="font-semibold">Degree Level:</span>
-                <p>{subject?.degreeLevel}</p>
-              </div>
-            </div>
-          </div>
+      <Card className="mt-4">
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[50px]">No.</TableHead>
+                <TableHead>Syllabus ID</TableHead>
+                <TableHead>Subject Name</TableHead>
+                <TableHead>Syllabus Name</TableHead>
+                <TableHead>Decision No</TableHead>
+                <TableHead>Pre-requisites</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-10">
+                    Loading...
+                  </TableCell>
+                </TableRow>
+              ) : subjects.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-10">
+                    No subjects found
+                  </TableCell>
+                </TableRow>
+              ) : (
+                subjects.map((subject, index) => (
+                  <TableRow key={subject.subjectId} className="hover:bg-slate-50">
+                    <TableCell>{index + 1}</TableCell>
+                    <TableCell>{subject.subjectId}</TableCell>
+                    <TableCell>{subject.subjectCode}</TableCell>
+                    <TableCell>
+                      <Link
+                        to={`/user/syllabus/${subject.subjectId}`}
+                        className="text-blue-600 hover:underline"
+                      >
+                        {subject.syllabusName}
+                      </Link>
+                    </TableCell>
+                    <TableCell>
+                      {subject.decisionNo} dated {new Date(subject.approvedDate).toLocaleDateString()}
+                    </TableCell>
+                    <TableCell>
+                      <p className="font-bold pl-4">
+                        {subject.subjectCode}: (No pre-requisite)
+                      </p>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
+      <div className="mt-4 flex items-center justify-between">
+        <p className="text-sm text-muted-foreground">
+          Page {currentPage} of {totalPages}
+        </p>
+        <Pagination>
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious onClick={() => setCurrentPage(p => Math.max(1, p - 1))} />
+            </PaginationItem>
+            <PaginationItem>
+              <PaginationLink isActive>{currentPage}</PaginationLink>
+            </PaginationItem>
+            <PaginationItem>
+              <PaginationNext onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
+      </div>
     </div>
+    
   );
 };
 
-export default DetailSubject;
+export default ListSubject;

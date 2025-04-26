@@ -42,7 +42,7 @@ const UserRoutes = (
       }
     />
     <Route 
-      path="subjects"
+      path="subject"
       element={
         <Suspense>
           <ListSubject />
@@ -50,7 +50,7 @@ const UserRoutes = (
       }
     />
     <Route
-      path="subjects/:id"
+      path="subject/:id"
       element={
         <Suspense>
           <DetailSubject />

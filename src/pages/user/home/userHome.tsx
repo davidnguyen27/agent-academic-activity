@@ -17,7 +17,7 @@ const features = [
   },
   {
     title: "View Subjects",
-    path: "/user/subjects",
+    path: "/user/subject",
     icon: Network,
     description: "Visualize subject learning paths"
   },

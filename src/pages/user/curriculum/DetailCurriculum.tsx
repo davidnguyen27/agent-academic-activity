@@ -57,7 +57,7 @@ const DetailCurriculum = () => {
           <BreadcrumbSeparator />
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
-              <Link to="/user/curriculum">Curricula</Link>
+              <Link to="/user/curriculum">Curriculum</Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
