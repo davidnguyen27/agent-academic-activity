@@ -11,6 +11,20 @@ import {
 } from "@/components/ui/breadcrumb";
 import { Home, Book } from "lucide-react";
 
+interface Subject {
+  subjectCode: string;
+  subjectName: string;
+  noCredit: number;
+  decisionNo: string;
+  isActive: boolean;
+  description: string;
+  studentTasks: string;
+  timeAllocation: string;
+  scoringScale: number;
+  minAvgMarkToPass: number;
+  degreeLevel: string;
+}
+
 const DetailSubject = () => {
   const { id } = useParams();
   const [subject, setSubject] = useState<Subject>();
@@ -18,17 +32,24 @@ const DetailSubject = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      try {
-        setLoading(true);
-        // Replace with actual API call
-        // const response = await fetch(`/api/subjects/${id}`);
-        // const data = await response.json();
-        // setSubject(data);
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setLoading(false);
-      }
+      setLoading(true);
+
+      // Mock subject data
+      setSubject({
+        subjectCode: "CS201",
+        subjectName: "Algorithms and Complexity",
+        noCredit: 4,
+        decisionNo: "D2025-201",
+        isActive: true,
+        description: "An introduction to algorithm design, complexity theory, and performance analysis.",
+        studentTasks: "Assignments, quizzes, midterm exam, final project.",
+        timeAllocation: "45 lecture hours, 15 lab hours",
+        scoringScale: 10,
+        minAvgMarkToPass: 5,
+        degreeLevel: "Bachelor",
+      });
+
+      setLoading(false);
     };
 
     fetchData();
@@ -44,7 +65,9 @@ const DetailSubject = () => {
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
-              <Link to="/user/home"><Home className="h-4 w-4" /></Link>
+              <Link to="/user/home">
+                <Home className="h-4 w-4" />
+              </Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
@@ -63,9 +86,7 @@ const DetailSubject = () => {
       <div className="flex justify-between items-center my-6">
         <h1 className="text-2xl font-bold">{subject?.subjectName}</h1>
         <Button variant="outline" asChild>
-          <Link to={`/user/syllabus/${subject?.subjectCode}`}>
-            View Syllabus
-          </Link>
+          <Link to={`/user/syllabus/${subject?.subjectCode}`}>View Syllabus</Link>
         </Button>
       </div>
 

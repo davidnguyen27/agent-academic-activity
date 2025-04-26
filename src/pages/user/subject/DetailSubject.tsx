@@ -9,8 +9,22 @@ import {
   BreadcrumbLink,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import { Home, Book, Calendar, GraduationCap, ClipboardList } from "lucide-react";
-import { format } from "date-fns";
+import { Home, Book } from "lucide-react";
+
+interface Subject {
+  subjectCode: string;
+  subjectName: string;
+  noCredit: number;
+  sessionNo: number;
+  description: string;
+  studentTasks: string;
+  timeAllocation: string;
+  scoringScale: number;
+  minAvgMarkToPass: number;
+  decisionNo: string;
+  isActive: boolean;
+  degreeLevel: string;
+}
 
 const DetailSubject = () => {
   const { id } = useParams();
@@ -18,26 +32,34 @@ const DetailSubject = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchSubject = async () => {
-      try {
-        setLoading(true);
-        // Replace with actual API call
-      } catch (error) {
-        console.error('Failed to fetch subject:', error);
-      } finally {
-        setLoading(false);
-      }
+    const fetchData = async () => {
+      setLoading(true);
+
+      // Mock data
+      setSubject({
+        subjectCode: "CS102",
+        subjectName: "Data Structures",
+        noCredit: 4,
+        sessionNo: 60,
+        description:
+          "This course introduces fundamental data structures such as stacks, queues, linked lists, trees, and graphs.",
+        studentTasks: "Homework assignments, quizzes, lab exercises.",
+        timeAllocation: "40 lecture hours, 20 lab hours",
+        scoringScale: 10,
+        minAvgMarkToPass: 5,
+        decisionNo: "D2025-102",
+        isActive: true,
+        degreeLevel: "Bachelor",
+      });
+
+      setLoading(false);
     };
 
-    fetchSubject();
+    fetchData();
   }, [id]);
 
   if (loading) {
-    return <div className="flex justify-center items-center min-h-screen">Loading...</div>;
-  }
-
-  if (!subject) {
-    return <div className="flex justify-center items-center min-h-screen">Subject not found</div>;
+    return <div>Loading...</div>;
   }
 
   return (
@@ -46,7 +68,9 @@ const DetailSubject = () => {
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
-              <Link to="/user/home"><Home className="h-4 w-4" /></Link>
+              <Link to="/user/home">
+                <Home className="h-4 w-4" />
+              </Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
@@ -62,123 +86,79 @@ const DetailSubject = () => {
         </BreadcrumbList>
       </Breadcrumb>
 
-      <div className="grid gap-6">
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <Book className="h-5 w-5" />
-              <h2 className="text-xl font-semibold">Basic Information</h2>
-            </div>
-          </CardHeader>
-          <CardContent className="grid gap-6">
+      <div className="flex justify-between items-center my-6">
+        <h1 className="text-2xl font-bold">{subject?.subjectName}</h1>
+        <Button variant="outline" asChild>
+          <Link to={`/user/syllabus/${subject?.subjectCode}`}>View Syllabus</Link>
+        </Button>
+      </div>
+
+      <Card className="mb-6">
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Book className="h-5 w-5" />
+            <h2 className="text-xl font-semibold">Subject Details</h2>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <span className="font-semibold">Subject Code:</span>
-                <p>{subject.subjectCode}</p>
-              </div>
-              <div>
-                <span className="font-semibold">Subject Name:</span>
-                <p>{subject.subjectName}</p>
+                <p>{subject?.subjectCode}</p>
               </div>
               <div>
                 <span className="font-semibold">Credits:</span>
-                <p>{subject.noCredit}</p>
+                <p>{subject?.noCredit}</p>
               </div>
               <div>
-                <span className="font-semibold">Sessions:</span>
-                <p>{subject.sessionNo}</p>
+                <span className="font-semibold">Decision No:</span>
+                <p>{subject?.decisionNo}</p>
+              </div>
+              <div>
+                <span className="font-semibold">Status:</span>
+                <p>
+                  <span
+                    className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium 
+                    ${subject?.isActive ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}
+                  >
+                    {subject?.isActive ? "Active" : "Inactive"}
+                  </span>
+                </p>
               </div>
             </div>
 
             <div>
               <span className="font-semibold">Description:</span>
-              <p className="mt-2 whitespace-pre-line">{subject.description}</p>
+              <p className="mt-2 whitespace-pre-line">{subject?.description}</p>
             </div>
-          </CardContent>
-        </Card>
 
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <Calendar className="h-5 w-5" />
-              <h2 className="text-xl font-semibold">Time & Requirements</h2>
-            </div>
-          </CardHeader>
-          <CardContent className="grid gap-4">
-            <div>
-              <span className="font-semibold">Time Allocation:</span>
-              <p>{subject.timeAllocation}</p>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <span className="font-semibold">Scoring Scale:</span>
-                <p>{subject.scoringScale}</p>
-              </div>
-              <div>
-                <span className="font-semibold">Minimum Pass Mark:</span>
-                <p>{subject.minAvgMarkToPass}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <ClipboardList className="h-5 w-5" />
-              <h2 className="text-xl font-semibold">Student Tasks & Notes</h2>
-            </div>
-          </CardHeader>
-          <CardContent className="grid gap-4">
             <div>
               <span className="font-semibold">Student Tasks:</span>
-              <p className="mt-2 whitespace-pre-line">{subject.studentTasks}</p>
+              <p className="mt-2 whitespace-pre-line">{subject?.studentTasks}</p>
             </div>
-            {subject.note && (
-              <div>
-                <span className="font-semibold">Additional Notes:</span>
-                <p className="mt-2 whitespace-pre-line">{subject.note}</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
 
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <GraduationCap className="h-5 w-5" />
-              <h2 className="text-xl font-semibold">Administrative Details</h2>
-            </div>
-          </CardHeader>
-          <CardContent className="grid grid-cols-2 gap-4">
-            <div>
-              <span className="font-semibold">Decision No:</span>
-              <p>{subject.decisionNo}</p>
-            </div>
-            <div>
-              <span className="font-semibold">Approval Date:</span>
-              <p>{format(new Date(subject.approvedDate), 'PPP')}</p>
-            </div>
-            <div>
-              <span className="font-semibold">Status:</span>
-              <div className="flex gap-2 mt-1">
-                <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium
-                  ${subject.isActive ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
-                  {subject.isActive ? "Active" : "Inactive"}
-                </span>
-                <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium
-                  ${subject.isApproved ? "bg-blue-100 text-blue-700" : "bg-yellow-100 text-yellow-700"}`}>
-                  {subject.isApproved ? "Approved" : "Pending Approval"}
-                </span>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <span className="font-semibold">Time Allocation:</span>
+                <p>{subject?.timeAllocation}</p>
+              </div>
+              <div>
+                <span className="font-semibold">Scoring Scale:</span>
+                <p>{subject?.scoringScale}</p>
+              </div>
+              <div>
+                <span className="font-semibold">Min Mark to Pass:</span>
+                <p>{subject?.minAvgMarkToPass}</p>
+              </div>
+              <div>
+                <span className="font-semibold">Degree Level:</span>
+                <p>{subject?.degreeLevel}</p>
               </div>
             </div>
-            <div>
-              <span className="font-semibold">Degree Level:</span>
-              <p>{subject.degreeLevel}</p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
