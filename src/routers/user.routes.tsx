@@ -1,23 +1,26 @@
 import { lazy, Suspense } from "react";
 import { Route } from "react-router-dom";
 import UserLayout from "@/layouts/user/userLayout";
+import PrivateRoute from "./PrivateRoute";
 
 const UserHome = lazy(() => import("@/pages/user/home/userHome"));
 const ListCurriculum = lazy(() => import("@/pages/user/curriculum/ListCurriculum"));
 const DetailCurriculum = lazy(() => import("@/pages/user/curriculum/DetailCurriculum"));
 const ListSubject = lazy(() => import("@/pages/user/subject/ListSubject"));
 const DetailSubject = lazy(() => import("@/pages/user/subject/DetailSubject"));
+const ChatBotHome = lazy(() => import("@/pages/user/home/ChatBotHome"));
 
 const UserRoutes = (
   <Route
     path="/user"
     element={
-      // <PrivateRoute>
-      <UserLayout />
-      // </PrivateRoute>
+      <PrivateRoute>
+        {/* <UserLayout /> */}
+        <ChatBotHome/>
+      </PrivateRoute>
     }
   >
-    <Route
+    {/* <Route
       index
       element={
         <Suspense>
@@ -56,7 +59,7 @@ const UserRoutes = (
           <DetailSubject />
         </Suspense>
       }
-    />
+    /> */}
   </Route>
 );
 
