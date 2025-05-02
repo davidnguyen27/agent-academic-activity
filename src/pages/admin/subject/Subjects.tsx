@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -22,18 +22,19 @@ import {
 import { BadgeInfo, Trash2 } from "lucide-react";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useLoading } from "@/hooks/useLoading";
-import { curriculumService } from "@/services/curriculum.service";
 import { subjectService } from "@/services/subject.service";
 import { toast } from "sonner";
 import ConfirmDeleteDialog from "@/components/layouts/admin/ModalConfirm";
 import { formatDateTime } from "@/utils/format/date-time.format";
+import { Badge } from "@/components/ui/badge";
+import { EmptySearchResult } from "@/components/common/EmptySearchResult";
+import { TableSkeleton } from "@/components/common/TableSkeleton";
 
 const SubjectManagement = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
   const [subjects, setSubjects] = useState<Subject[]>([]);
-  const [curriculums, setCurriculums] = useState<Curriculum[]>([]);
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<"code" | "name" | "default">("default");
   const [deletedFilter, setDeletedFilter] = useState(false);
@@ -46,21 +47,6 @@ const SubjectManagement = () => {
   const { isLoading, startLoading } = useLoading();
   const pageSize = 10;
 
-  // Tạo Map curriculumId -> curriculumCode
-  const curriculumMap = useMemo(() => {
-    const map = new Map<string, string>();
-    curriculums.forEach((c) => map.set(c.curriculumId, c.curriculumCode));
-    return map;
-  }, [curriculums]);
-
-  // Gọi danh sách curriculum một lần
-  useEffect(() => {
-    curriculumService.getAllCurriculums({ pageSize: 1000 }).then((res) => {
-      setCurriculums(res.items);
-    });
-  }, []);
-
-  // Gọi danh sách subject
   const fetchSubjects = useCallback(async () => {
     const res = await startLoading(() =>
       subjectService.getAllSubjects({
@@ -120,14 +106,16 @@ const SubjectManagement = () => {
   }, [fetchSubjects]);
 
   return (
-    <div className="bg-white p-5 shadow-md rounded-2xl">
-      <h1 className="text-2xl font-bold text-blue-500 mb-4">Subject Management</h1>
+    <div className="bg-white p-6 shadow-lg rounded-xl">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-3xl font-bold text-gray-800">Subject Management</h1>
+      </div>
 
-      <Breadcrumb>
+      <Breadcrumb className="mb-6">
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
-              <Link to="/admin/dashboard">Home</Link>
+              <Link to="/admin/dashboard">Dashboard</Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
@@ -137,70 +125,99 @@ const SubjectManagement = () => {
         </BreadcrumbList>
       </Breadcrumb>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 my-6">
-        <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by name..." />
-        <Select onValueChange={(value) => setSortBy(value as "code" | "name" | "default")}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Sort by field" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="default">Default</SelectItem>
-            <SelectItem value="code">Sort by Code</SelectItem>
-            <SelectItem value="name">Sort by Name</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select onValueChange={(value) => setDeletedFilter(value === "true")}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Active or Deleted" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="false">Active</SelectItem>
-            <SelectItem value="true">Deleted</SelectItem>
-          </SelectContent>
-        </Select>
-        <Button onClick={() => navigate("/admin/subject/create")}>Add a Subject</Button>
+      {/* Filter Panel */}
+      <div className="flex flex-wrap items-end justify-between gap-4 bg-gray-50 p-4 rounded-lg border mb-6">
+        <div className="flex flex-col gap-1">
+          <label className="text-sm text-gray-600">Search</label>
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search by code..."
+            className="w-60"
+          />
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <label className="text-sm text-gray-600">Sort By</label>
+          <Select onValueChange={(value) => setSortBy(value as "code" | "name" | "default")} defaultValue="default">
+            <SelectTrigger className="w-44">
+              <SelectValue placeholder="Sort field" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="default">Default</SelectItem>
+              <SelectItem value="code">Code</SelectItem>
+              <SelectItem value="name">Name</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <label className="text-sm text-gray-600">Status</label>
+          <Select onValueChange={(value) => setDeletedFilter(value === "true")} defaultValue="false">
+            <SelectTrigger className="w-40">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="false">Active</SelectItem>
+              <SelectItem value="true">Deleted</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="ml-auto">
+          <Button
+            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white"
+            onClick={() => navigate("/admin/subject/create")}
+          >
+            + Add a Subject
+          </Button>
+        </div>
       </div>
 
-      <div className="rounded-lg border overflow-x-auto">
+      {/* Table */}
+      <div className="max-w-full overflow-x-auto border rounded-lg">
         <Table>
-          <TableHeader>
+          <TableHeader className="bg-gray-100">
             <TableRow>
-              <TableHead>No.</TableHead>
-              <TableHead>Code</TableHead>
-              <TableHead>Name</TableHead>
-              <TableHead>Approved Date</TableHead>
-              <TableHead>Syllabus Name</TableHead>
-              <TableHead>Curriculum Code</TableHead>
-              <TableHead>DecisionNo</TableHead>
-              <TableHead>IsApproved</TableHead>
-              <TableHead>Action</TableHead>
+              <TableHead className="text-center whitespace-nowrap">#</TableHead>
+              <TableHead className="whitespace-nowrap">Code</TableHead>
+              <TableHead className="whitespace-nowrap">Name</TableHead>
+              <TableHead className="whitespace-nowrap">Approved Date</TableHead>
+              <TableHead className="whitespace-nowrap">Syllabus</TableHead>
+              <TableHead className="whitespace-nowrap">Decision No</TableHead>
+              <TableHead className="whitespace-nowrap">Status</TableHead>
+              <TableHead className="text-center whitespace-nowrap">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={9} className="text-center py-10">
-                  <span className="text-blue-500 animate-pulse">Loading...</span>
-                </TableCell>
+                <TableSkeleton columns={8} />
               </TableRow>
             ) : subjects.length > 0 ? (
               subjects.map((subject, index) => (
-                <TableRow key={subject.subjectCode}>
-                  <TableCell>{(page - 1) * pageSize + index + 1}</TableCell>
-                  <TableCell>{subject.subjectCode}</TableCell>
-                  <TableCell>{subject.subjectName}</TableCell>
-                  <TableCell>{formatDateTime(subject.approvedDate)}</TableCell>
-                  <TableCell>{subject.syllabusName}</TableCell>
-                  <TableCell>{curriculumMap.get(subject.curriculumId)}</TableCell>
-                  <TableCell>{subject.decisionNo}</TableCell>
-                  <TableCell>{subject.isApproved ? "Yes" : "No"}</TableCell>
-                  <TableCell className="flex gap-2">
+                <TableRow key={subject.subjectId}>
+                  <TableCell className="text-center whitespace-nowrap">{(page - 1) * pageSize + index + 1}</TableCell>
+                  <TableCell className="whitespace-nowrap max-w-[150px] truncate">{subject.subjectCode}</TableCell>
+                  <TableCell className="whitespace-nowrap max-w-[200px] truncate">{subject.subjectName}</TableCell>
+                  <TableCell className="whitespace-nowrap">{formatDateTime(subject.approvedDate)}</TableCell>
+                  <TableCell className="whitespace-nowrap max-w-[180px] truncate">{subject.syllabusName}</TableCell>
+                  <TableCell className="whitespace-nowrap max-w-[160px] truncate">{subject.decisionNo}</TableCell>
+                  <TableCell className="whitespace-nowrap">
+                    <Badge
+                      variant="outline"
+                      className={subject.isApproved ? "border-green-500 text-green-600" : "border-red-500 text-red-600"}
+                    >
+                      {subject.isApproved ? "Approved" : "Pending"}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-center whitespace-nowrap space-x-3">
                     <ConfirmDeleteDialog onConfirm={() => handleDelete(subject.subjectId)}>
-                      <Trash2 size={16} className="cursor-pointer text-red-500" />
+                      <Trash2 className="inline-block text-red-500 hover:text-red-600 cursor-pointer" size={18} />
                     </ConfirmDeleteDialog>
                     <BadgeInfo
-                      size={16}
-                      className="cursor-pointer text-blue-500"
+                      className="inline-block text-blue-500 hover:text-blue-600 cursor-pointer"
+                      size={18}
                       onClick={() => navigate(`/admin/subject/details?id=${subject.subjectId}`)}
                     />
                   </TableCell>
@@ -208,8 +225,8 @@ const SubjectManagement = () => {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={7} className="text-center text-gray-400">
-                  No subjects found.
+                <TableCell colSpan={8}>
+                  <EmptySearchResult />
                 </TableCell>
               </TableRow>
             )}
@@ -217,8 +234,9 @@ const SubjectManagement = () => {
         </Table>
       </div>
 
-      <div className="flex mt-8">
-        <Pagination className="ml-auto">
+      {/* Pagination */}
+      <div className="flex justify-end mt-6 pt-4">
+        <Pagination>
           <PaginationContent>
             <PaginationItem>
               <PaginationPrevious href="#" onClick={() => setPage((p) => Math.max(p - 1, 1))} />

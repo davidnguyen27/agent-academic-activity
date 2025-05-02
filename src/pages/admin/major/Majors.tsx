@@ -31,7 +31,6 @@ import ConfirmDeleteDialog from "@/components/layouts/admin/ModalConfirm";
 const MajorManagement = () => {
   const navigate = useNavigate();
   const location = useLocation();
-
   const [majors, setMajors] = useState<Major[]>([]);
   const [search, setSearch] = useState("");
   const [totalPages, setTotalPages] = useState(1);
@@ -81,11 +80,9 @@ const MajorManagement = () => {
 
   useEffect(() => {
     const id = new URLSearchParams(location.search).get("id");
-
     if (id && (!openDetail || selectedMajor?.majorId !== id)) {
       handleOpenDetail(id);
     }
-
     if (!id && openDetail) {
       setOpenDetail(false);
       setSelectedMajor(null);
@@ -97,95 +94,98 @@ const MajorManagement = () => {
   }, [fetchMajors]);
 
   return (
-    <div className="bg-white p-5 shadow-md rounded-2xl">
-      <h1 className="text-2xl font-bold text-blue-500 mb-4">Major Management</h1>
+    <div className="bg-white p-8 rounded-2xl shadow-md">
+      {/* Title and Breadcrumb */}
+      <div className="flex flex-col gap-2 mb-6">
+        <h1 className="text-3xl font-bold text-gray-800">Major Management</h1>
+        <Breadcrumb>
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink asChild>
+                <Link to="/admin/dashboard">Dashboard</Link>
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>Majors</BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
+      </div>
 
-      <Breadcrumb>
-        <BreadcrumbList>
-          <BreadcrumbItem>
-            <BreadcrumbLink asChild>
-              <Link to="/admin/dashboard">Home</Link>
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbLink>Majors</BreadcrumbLink>
-          </BreadcrumbItem>
-        </BreadcrumbList>
-      </Breadcrumb>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 my-6">
-        <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by name..." />
+      {/* Filter and Actions */}
+      <div className="flex flex-wrap items-center gap-4 mb-6">
+        <Input
+          className="flex-1 min-w-[200px]"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search by name..."
+        />
         <Select onValueChange={(value) => setSortBy(value as "code" | "name" | "default")}>
           <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Sort by field" />
+            <SelectValue placeholder="Sort by" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="default">Default</SelectItem>
-            <SelectItem value="code">Sort by Code</SelectItem>
-            <SelectItem value="name">Sort by Name</SelectItem>
+            <SelectItem value="code">Code</SelectItem>
+            <SelectItem value="name">Name</SelectItem>
           </SelectContent>
         </Select>
         <Select onValueChange={(value) => setDeletedFilter(value === "true")}>
           <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Active or Deleted" />
+            <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="false">Active</SelectItem>
             <SelectItem value="true">Deleted</SelectItem>
           </SelectContent>
         </Select>
-
         <ModalCreateMajor onSuccess={fetchMajors} />
       </div>
 
-      <div className="rounded-lg border overflow-x-auto">
+      {/* Table */}
+      <div className="rounded-xl overflow-hidden border bg-white">
         <Table>
-          <TableHeader>
+          <TableHeader className="bg-gray-50">
             <TableRow>
-              <TableHead>No.</TableHead>
+              <TableHead className="w-16">#</TableHead>
               <TableHead>Code</TableHead>
               <TableHead>Name</TableHead>
-              <TableHead>Start At</TableHead>
-              <TableHead>Created At</TableHead>
-              <TableHead>Updated At</TableHead>
-              <TableHead>Action</TableHead>
+              <TableHead>Start Date</TableHead>
+              <TableHead>Created</TableHead>
+              <TableHead>Updated</TableHead>
+              <TableHead className="text-center">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-10 text-blue-500 animate-pulse">
-                  Loading...
+                <TableCell colSpan={7} className="text-center py-10 text-blue-500 animate-pulse">
+                  Loading data...
                 </TableCell>
               </TableRow>
             ) : majors.length > 0 ? (
-              majors.map((major, i) => (
-                <TableRow key={major.majorId}>
-                  <TableCell>{(page - 1) * pageSize + i + 1}</TableCell>
+              majors.map((major, index) => (
+                <TableRow key={major.majorId} className="hover:bg-gray-50 transition-all">
+                  <TableCell>{(page - 1) * pageSize + index + 1}</TableCell>
                   <TableCell>{major.majorCode}</TableCell>
                   <TableCell>{major.majorName}</TableCell>
                   <TableCell>{formatDateTime(major.startAt)}</TableCell>
                   <TableCell>{formatDateTime(major.createdAt)}</TableCell>
                   <TableCell>{formatDateTime(major.updatedAt)}</TableCell>
-                  <TableCell className="flex gap-2">
+                  <TableCell className="flex justify-center gap-3">
                     <ConfirmDeleteDialog onConfirm={() => handleDeleteMajor(major.majorId)}>
-                      <Trash2 size={16} color="red" className="cursor-pointer" />
+                      <Trash2 size={18} className="text-red-500 hover:text-red-600 cursor-pointer" />
                     </ConfirmDeleteDialog>
                     <BadgeInfo
-                      size={16}
-                      color="blue"
-                      className="cursor-pointer"
-                      onClick={() => {
-                        navigate(`/admin/major?id=${major.majorId}`);
-                      }}
+                      size={18}
+                      className="text-blue-500 hover:text-blue-600 cursor-pointer"
+                      onClick={() => navigate(`/admin/major?id=${major.majorId}`)}
                     />
                   </TableCell>
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={6} className="text-center text-gray-400">
+                <TableCell colSpan={7} className="text-center py-10 text-gray-400 italic">
                   No majors found.
                 </TableCell>
               </TableRow>
@@ -194,8 +194,9 @@ const MajorManagement = () => {
         </Table>
       </div>
 
-      <div className="flex mt-8">
-        <Pagination className="ml-auto">
+      {/* Pagination */}
+      <div className="flex justify-end mt-6">
+        <Pagination>
           <PaginationContent>
             <PaginationItem>
               <PaginationPrevious href="#" onClick={() => setPage((prev) => Math.max(prev - 1, 1))} />
@@ -213,15 +214,15 @@ const MajorManagement = () => {
           </PaginationContent>
         </Pagination>
       </div>
+
+      {/* Modal Edit */}
       <ModalEditMajor
         open={openDetail}
         major={selectedMajor}
         onSuccess={fetchMajors}
         onOpenChange={(open) => {
           setOpenDetail(open);
-          if (!open) {
-            navigate("/admin/major", { replace: true });
-          }
+          if (!open) navigate("/admin/major", { replace: true });
         }}
       />
     </div>

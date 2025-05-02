@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "react-router-dom";
+import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 
 const navItems = [
   { label: "Dashboard", icon: LayoutDashboard, to: "/admin/dashboard" },
@@ -34,14 +35,17 @@ const SideBar = () => {
   const pathname = location.pathname;
 
   return (
-    <aside className={`h-screen bg-blue-500 text-white p-3 transition-all duration-300 ${collapsed ? "w-17" : "w-56"}`}>
-      <div className="flex items-center justify-between mb-6">
+    <aside
+      className={`h-screen bg-gradient-to-b from-blue-600 via-blue-500 to-blue-400 text-white p-4 transition-all duration-300 
+      ${collapsed ? "w-[80px]" : "w-[250px]"}`}
+    >
+      <div className="flex items-center justify-between mb-10">
         <h2
-          className={`text-xl font-semibold whitespace-nowrap overflow-hidden transition-all duration-300 ${
+          className={`text-2xl font-bold whitespace-nowrap overflow-hidden transition-all duration-300 ${
             collapsed ? "w-0 opacity-0" : "w-full opacity-100"
           }`}
         >
-          Academic Activity
+          Academic
         </h2>
         <Button
           variant="ghost"
@@ -49,33 +53,48 @@ const SideBar = () => {
           onClick={() => setCollapsed(!collapsed)}
           className="text-white hover:bg-blue-500"
         >
-          <Menu size={20} />
+          <Menu size={24} />
         </Button>
       </div>
 
-      <nav className="space-y-1">
-        {navItems.map((item) => {
-          const isActive = pathname === item.to;
-          return (
-            <Link
-              key={item.label}
-              to={item.to}
-              className={`flex items-center gap-2 px-3 py-2 rounded transition-all
-                ${isActive ? "bg-white text-blue-600 font-semibold" : "hover:bg-white hover:text-blue-600"}
-              `}
-            >
-              <item.icon className="w-5 h-5 min-w-[20px]" />
-              <span
-                className={`text-sm font-medium whitespace-nowrap overflow-hidden transition-all duration-300 ${
-                  collapsed ? "w-0 opacity-0" : "w-full opacity-100"
-                }`}
+      <TooltipProvider>
+        <nav className="flex flex-col gap-2">
+          {navItems.map((item) => {
+            const isActive = pathname.startsWith(item.to);
+            const linkContent = (
+              <Link
+                key={item.label}
+                to={item.to}
+                className={`group flex items-center px-4 py-3 rounded-lg transition-all font-medium ${
+                  isActive ? "bg-white text-blue-600 shadow-md" : "hover:bg-blue-300/30 hover:text-white"
+                } ${collapsed ? "justify-center" : "gap-4 justify-start"}`}
               >
-                {item.label}
-              </span>
-            </Link>
-          );
-        })}
-      </nav>
+                <item.icon
+                  className={`w-6 h-6 min-w-[24px] transform transition-transform duration-200 group-hover:scale-110 ${
+                    isActive ? "text-blue-600" : ""
+                  }`}
+                />
+                <span
+                  className={`overflow-hidden transition-all duration-300 ${
+                    collapsed ? "w-0 opacity-0" : "w-full opacity-100"
+                  }`}
+                >
+                  {item.label}
+                </span>
+              </Link>
+            );
+
+            return collapsed ? (
+              <Tooltip key={item.label}>
+                <TooltipTrigger asChild>{linkContent}</TooltipTrigger>
+                <TooltipContent side="right">{item.label}</TooltipContent>
+              </Tooltip>
+            ) : (
+              linkContent
+            );
+          })}
+        </nav>
+      </TooltipProvider>
     </aside>
   );
 };

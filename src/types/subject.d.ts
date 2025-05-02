@@ -7,7 +7,6 @@ interface Subject {
   isApproved: boolean;
   noCredit: number;
   approvedDate: string;
-  curriculumId: string;
   sessionNo: number;
   syllabusName: string;
   degreeLevel: string;

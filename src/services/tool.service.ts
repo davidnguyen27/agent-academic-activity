@@ -19,29 +19,29 @@ export const toolService = {
     sortOrder = "Ascending",
     isDelete = false,
   }: params) => {
-    const response = await axiosInstance.get("/api/tool/get-all-tools", {
+    const response = await axiosInstance.get("/api/tools", {
       params: { pageNumber, pageSize, search, sortBy, sortOrder, isDelete },
     });
     return response.data;
   },
 
   createTool: async (data: ToolInput) => {
-    const response = await axiosInstance.post("/api/tool/create-tool", data);
+    const response = await axiosInstance.post("/api/tools", data);
     return response.data;
   },
 
   getToolById: async (id: string) => {
-    const response = await axiosInstance.get(`/api/tool/get-tool-by-id/${id}`);
+    const response = await axiosInstance.get(`/api/tools/${id}`);
     return response.data;
   },
 
   updateTool: async (id: string, data: ToolInput) => {
-    const response = await axiosInstance.put(`/api/tool/update-tool/${id}`, data);
+    const response = await axiosInstance.put(`/api/tools/${id}`, data);
     return response.data;
   },
 
   deleteTool: async (id: string) => {
-    const response = await axiosInstance.delete(`/api/tool/delete-tool/${id}`);
+    const response = await axiosInstance.delete(`/api/tools/${id}`);
     return response.data;
   },
 };

@@ -20,13 +20,15 @@ import {
 import { BadgeInfo, Trash2 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-
 import { curriculumService } from "@/services/curriculum.service";
 import { majorService } from "@/services/major.service";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useLoading } from "@/hooks/useLoading";
 import { Button } from "@/components/ui/button";
 import ConfirmDeleteDialog from "@/components/layouts/admin/ModalConfirm";
+import { TableSkeleton } from "@/components/common/TableSkeleton";
+import { EmptySearchResult } from "@/components/common/EmptySearchResult";
+import { Badge } from "@/components/ui/badge";
 
 const CurriculumManagement = () => {
   const navigate = useNavigate();
@@ -46,21 +48,18 @@ const CurriculumManagement = () => {
   const { isLoading, startLoading } = useLoading();
   const pageSize = 10;
 
-  // Tạo Map majorId -> majorName
   const majorMap = useMemo(() => {
     const map = new Map<string, string>();
     majors.forEach((m) => map.set(m.majorId, m.majorName));
     return map;
   }, [majors]);
 
-  // Gọi danh sách major một lần
   useEffect(() => {
     majorService.getAllMajors({ pageSize: 1000 }).then((res) => {
       setMajors(res.items);
     });
   }, []);
 
-  // Gọi danh sách curriculum
   const fetchCurriculums = useCallback(async () => {
     const res = await startLoading(() =>
       curriculumService.getAllCurriculums({
@@ -101,7 +100,6 @@ const CurriculumManagement = () => {
     if (id && (!openDetail || selectedCurriculum?.curriculumId !== id)) {
       handleOpenDetail(id);
     }
-
     if (!id && openDetail) {
       setOpenDetail(false);
       setSelectedCurriculum(null);
@@ -113,83 +111,112 @@ const CurriculumManagement = () => {
   }, [fetchCurriculums]);
 
   return (
-    <div className="bg-white p-5 shadow-md rounded-2xl">
-      <h1 className="text-2xl font-bold text-blue-500 mb-4">Curriculum Management</h1>
+    <div className="bg-white p-8 shadow-md rounded-2xl">
+      {/* Title + Breadcrumb */}
+      <div className="flex flex-col gap-2 mb-6">
+        <h1 className="text-3xl font-bold text-gray-800">Curriculum Management</h1>
+        <Breadcrumb>
+          <BreadcrumbList className="text-gray-500 text-sm">
+            <BreadcrumbItem>
+              <BreadcrumbLink asChild>
+                <Link to="/admin/dashboard">Dashboard</Link>
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>Curriculums</BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
+      </div>
 
-      <Breadcrumb>
-        <BreadcrumbList>
-          <BreadcrumbItem>
-            <BreadcrumbLink asChild>
-              <Link to="/admin/dashboard">Home</Link>
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbLink>Curriculums</BreadcrumbLink>
-          </BreadcrumbItem>
-        </BreadcrumbList>
-      </Breadcrumb>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 my-6">
-        <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by name..." />
+      {/* Filters and Actions */}
+      <div className="flex flex-wrap items-center gap-4 mb-8">
+        <Input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search curriculum by name..."
+          className="flex-1 min-w-[200px]"
+        />
         <Select onValueChange={(value) => setSortBy(value as "code" | "name" | "default")}>
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Sort by field" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="default">Default</SelectItem>
-            <SelectItem value="code">Sort by Code</SelectItem>
-            <SelectItem value="name">Sort by Name</SelectItem>
+            <SelectItem value="code">Code</SelectItem>
+            <SelectItem value="name">Name</SelectItem>
           </SelectContent>
         </Select>
         <Select onValueChange={(value) => setDeletedFilter(value === "true")}>
           <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Active or Deleted" />
+            <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="false">Active</SelectItem>
             <SelectItem value="true">Deleted</SelectItem>
           </SelectContent>
         </Select>
-        <Button onClick={() => navigate("/admin/curriculum/create")}>Add Curriculum</Button>
+        <Button
+          onClick={() => navigate("/admin/curriculum/create")}
+          className="bg-blue-600 hover:bg-blue-700 text-white"
+        >
+          + Add a Curriculum
+        </Button>
       </div>
 
-      <div className="rounded-lg border overflow-x-auto">
+      {/* Table */}
+      <div className="rounded-lg border overflow-x-auto bg-white">
         <Table>
-          <TableHeader>
+          <TableHeader className="bg-gray-50">
             <TableRow>
-              <TableHead>No.</TableHead>
+              <TableHead className="text-center">#</TableHead>
               <TableHead>Code</TableHead>
               <TableHead>Name</TableHead>
               <TableHead>Decision No</TableHead>
               <TableHead>Major</TableHead>
               <TableHead>Approved</TableHead>
-              <TableHead>Action</TableHead>
+              <TableHead className="text-center">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              <TableRow>
-                <TableCell colSpan={9} className="text-center py-10">
-                  <span className="text-blue-500 animate-pulse">Loading...</span>
-                </TableCell>
-              </TableRow>
+              <TableSkeleton />
             ) : curriculums.length > 0 ? (
               curriculums.map((curriculum, index) => (
-                <TableRow key={curriculum.curriculumCode}>
-                  <TableCell>{(page - 1) * pageSize + index + 1}</TableCell>
-                  <TableCell>{curriculum.curriculumCode}</TableCell>
-                  <TableCell>{curriculum.curriculumName}</TableCell>
-                  <TableCell>{curriculum.decisionNo}</TableCell>
-                  <TableCell>{majorMap.get(curriculum.majorId)}</TableCell>
-                  <TableCell>{curriculum.isApproved ? "Yes" : "No"}</TableCell>
-                  <TableCell className="flex gap-2">
+                <TableRow key={curriculum.curriculumId} className="hover:bg-gray-50 transition-all">
+                  <TableCell className="text-center">{(page - 1) * pageSize + index + 1}</TableCell>
+                  <TableCell className="truncate max-w-[100px]" title={curriculum.curriculumCode}>
+                    {curriculum.curriculumCode}
+                  </TableCell>
+                  <TableCell className="truncate max-w-[250px]" title={curriculum.curriculumName}>
+                    {curriculum.curriculumName}
+                  </TableCell>
+                  <TableCell className="truncate max-w-[150px]" title={curriculum.decisionNo}>
+                    {curriculum.decisionNo}
+                  </TableCell>
+                  <TableCell className="truncate max-w-[100px]" title={majorMap.get(curriculum.majorId) ?? "-"}>
+                    {majorMap.get(curriculum.majorId)}
+                  </TableCell>
+                  <TableCell className="max-w-[50px]">
+                    {curriculum.isApproved ? (
+                      <Badge variant="outline" className="text-green-600 border-green-500">
+                        Yes
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="text-red-600 border-red-500">
+                        No
+                      </Badge>
+                    )}
+                  </TableCell>
+                  <TableCell className="flex justify-center gap-3">
                     <ConfirmDeleteDialog onConfirm={() => handleDelete(curriculum.curriculumId)}>
-                      <Trash2 size={16} className="cursor-pointer text-red-500" />
+                      <Trash2
+                        size={18}
+                        className="text-red-500 hover:text-red-600 hover:scale-110 transition-transform cursor-pointer"
+                      />
                     </ConfirmDeleteDialog>
                     <BadgeInfo
-                      size={16}
-                      className="cursor-pointer text-blue-500"
+                      size={18}
+                      className="text-blue-500 hover:text-blue-600 hover:scale-110 transition-transform cursor-pointer"
                       onClick={() => navigate(`/admin/curriculum/details?id=${curriculum.curriculumId}`)}
                     />
                   </TableCell>
@@ -197,8 +224,8 @@ const CurriculumManagement = () => {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={7} className="text-center text-gray-400">
-                  No curriculums found.
+                <TableCell colSpan={7}>
+                  <EmptySearchResult />
                 </TableCell>
               </TableRow>
             )}
@@ -206,8 +233,9 @@ const CurriculumManagement = () => {
         </Table>
       </div>
 
-      <div className="flex mt-8">
-        <Pagination className="ml-auto">
+      {/* Pagination */}
+      <div className="flex justify-end mt-6 pt-4">
+        <Pagination>
           <PaginationContent>
             <PaginationItem>
               <PaginationPrevious href="#" onClick={() => setPage((p) => Math.max(p - 1, 1))} />

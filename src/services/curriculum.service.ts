@@ -3,7 +3,7 @@ import { CurriculumInput } from "@/utils/validate/curriculum.schema";
 
 export const curriculumService = {
   createCurriculum: async (data: CurriculumInput) => {
-    const response = await axiosInstance.post("/api/curriculum/create-curriculum", data);
+    const response = await axiosInstance.post("/api/curriculums", data);
     return response.data;
   },
 
@@ -15,24 +15,24 @@ export const curriculumService = {
     sortType = "Ascending",
     isDelete = false,
   }: Params) => {
-    const response = await axiosInstance.get("/api/curriculum/get-all-curriculums", {
+    const response = await axiosInstance.get("/api/curriculums", {
       params: { pageNumber, pageSize, search, sortBy, sortType, isDelete },
     });
     return response.data;
   },
 
   getCurriculumById: async (id: string) => {
-    const response = await axiosInstance.get(`/api/curriculum/get-curriculum/${id}`);
+    const response = await axiosInstance.get(`/api/curriculums/${id}`);
     return response.data;
   },
 
   updateCurriculum: async (id: string, data: CurriculumInput) => {
-    const response = await axiosInstance.put(`/api/curriculum/update-curriculum/${id}`, data);
+    const response = await axiosInstance.put(`/api/curriculums/${id}`, data);
     return response.data;
   },
 
   deleteCurriculum: async (id: string) => {
-    const response = await axiosInstance.delete(`/api/curriculum/delete-curriculum/${id}`);
+    const response = await axiosInstance.delete(`/api/curriculums/${id}`);
     return response.data;
   },
 };
