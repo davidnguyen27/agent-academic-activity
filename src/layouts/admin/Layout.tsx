@@ -5,11 +5,11 @@ import { Outlet } from "react-router-dom";
 
 export default function AdminLayout() {
   return (
-    <div className="flex min-h-screen h-screen">
+    <div className="flex min-h-screen h-screen bg-gray-50">
       <SideBar />
-      <div className="flex-1 flex flex-col bg-gray-100">
+      <div className="flex-1 flex flex-col">
         <Header />
-        <main className="flex-1 p-6 overflow-y-auto">
+        <main className="flex-1 p-8 overflow-y-auto">
           <PageTransitionLoader>
             <Outlet />
           </PageTransitionLoader>

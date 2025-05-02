@@ -1,92 +1,92 @@
 import { useState } from "react";
+import { getAuth, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { app } from "@/configs/firebase.config";
+import { authService } from "@/services/auth.service";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
+import { FcGoogle } from "react-icons/fc";
+import { useNavigate } from "react-router-dom";
 
 export default function SignIn() {
-  const [educationLevel, setEducationLevel] = useState("FPTU");
+  const [isSigningIn, setIsSigningIn] = useState(false);
+  const navigate = useNavigate();
+  const { setUser } = useAuth();
+
+  const handleGoogleSignIn = async () => {
+    setIsSigningIn(true);
+    const auth = getAuth(app);
+    const provider = new GoogleAuthProvider();
+    try {
+      const result = await signInWithPopup(auth, provider);
+      const credential = GoogleAuthProvider.credentialFromResult(result);
+      if (credential) {
+        const idToken = credential.idToken;
+        const { accessToken, refreshToken } = await authService.loginGoogle({ token: idToken ?? "" });
+        localStorage.setItem("accessToken", accessToken);
+        localStorage.setItem("refreshToken", refreshToken);
+
+        console.log(idToken);
+
+        const user = await authService.currentUser();
+
+        localStorage.setItem("user", JSON.stringify(user.student));
+        localStorage.setItem("role", user.user.role);
+        setUser(user.student);
+
+        toast.success(`Welcome back, ${user.student.fullName}`);
+        navigate("/user/chat");
+      }
+    } catch {
+      toast.error("Sign in failed. Please try again.");
+      setIsSigningIn(false);
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center px-4 py-10">
-      <div className="w-full max-w-7xl">
+    <div className="min-h-screen flex flex-col justify-center items-center bg-gradient-to-br from-blue-100 to-blue-300 px-6 py-8 animate-fade">
+      <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl p-8 space-y-8">
         {/* Title */}
-        <h1 className="text-3xl md:text-4xl font-bold text-center text-blue-900 mb-10">
-          FPT Education Learning Materials
-        </h1>
+        <div className="text-center space-y-2">
+          <h1 className="text-3xl md:text-4xl font-bold text-gray-800">AI Learning Materials</h1>
+          <p className="text-sm text-gray-500">Explore subjects, discover learning paths, plan your future with AI.</p>
+        </div>
 
-        {/* Content grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {/* Guest Features Section */}
-          <div className="bg-white rounded-2xl shadow-lg p-8 space-y-6">
-            <h2 className="text-2xl font-bold text-blue-800 text-center">Guest Features</h2>
+        {/* Google Login */}
+        <button
+          onClick={handleGoogleSignIn}
+          disabled={isSigningIn}
+          className="w-full flex items-center justify-center gap-3 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold transition active:scale-95 disabled:opacity-60"
+        >
+          {isSigningIn ? (
+            <div className="animate-spin w-5 h-5 border-2 border-t-transparent border-white rounded-full"></div>
+          ) : (
+            <>
+              <FcGoogle size={22} />
+              Sign in with Google
+            </>
+          )}
+        </button>
 
-            <div className="grid md:grid-cols-2 gap-6">
-              <div>
-                <h3 className="text-lg font-semibold text-gray-700 mb-2 text-center">FPT Schools</h3>
-                <div className="space-y-2">
-                  <button className="w-full bg-orange-400 hover:bg-orange-500 text-white py-2 rounded-lg text-sm font-medium">
-                    View Curriculums and Syllabi
-                  </button>
-                  <button className="w-full bg-orange-400 hover:bg-orange-500 text-white py-2 rounded-lg text-sm font-medium">
-                    Show Learning Path of a Subject
-                  </button>
-                  <button className="w-full bg-orange-400 hover:bg-orange-500 text-white py-2 rounded-lg text-sm font-medium">
-                    A subject is the pre-requisite of
-                  </button>
-                </div>
-              </div>
+        {/* OR Divider */}
+        <div className="flex items-center gap-4">
+          <div className="flex-1 h-px bg-gray-300"></div>
+          <span className="text-gray-400 text-xs">OR</span>
+          <div className="flex-1 h-px bg-gray-300"></div>
+        </div>
 
-              <div>
-                <h3 className="text-lg font-semibold text-gray-700 mb-2 text-center">FPT University</h3>
-                <div className="space-y-2">
-                  <button className="w-full bg-orange-400 hover:bg-orange-500 text-white py-2 rounded-lg text-sm font-medium">
-                    View Curricula and Syllabi
-                  </button>
-                  <button className="w-full bg-orange-400 hover:bg-orange-500 text-white py-2 rounded-lg text-sm font-medium">
-                    Show Learning Path of a Subject
-                  </button>
-                  <button className="w-full bg-orange-400 hover:bg-orange-500 text-white py-2 rounded-lg text-sm font-medium">
-                    A subject is the pre-requisite of
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
+        {/* FEID Login */}
+        <button
+          onClick={() => navigate("/authentication")}
+          className="w-full bg-indigo-500 hover:bg-indigo-600 text-white py-3 rounded-lg text-sm font-semibold transition active:scale-95"
+        >
+          Login with FEID
+        </button>
 
-          {/* Sign In Section */}
-          <div className="bg-white rounded-2xl shadow-lg p-8 space-y-6">
-            <h2 className="text-2xl font-bold text-blue-800 text-center">Sign In</h2>
-
-            <div className="space-y-4">
-              <label className="block text-sm font-medium text-gray-600">Select Education Level:</label>
-              <select
-                className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm"
-                value={educationLevel}
-                onChange={(e) => setEducationLevel(e.target.value)}
-              >
-                <option value="FPTU">FPT University</option>
-                <option value="FPTSchools">FPT Schools</option>
-              </select>
-
-              <div className="text-sm text-gray-700">
-                Sign in using <span className="font-semibold">@fpt.edu.vn</span>
-              </div>
-
-              <button className="w-full border border-gray-300 rounded-full py-2 hover:shadow text-sm font-medium">
-                Sign in with Google
-              </button>
-
-              <div className="text-sm text-gray-600">
-                Với sinh viên từ <span className="font-semibold">K19</span> đăng nhập với FEID
-              </div>
-              <button className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg text-sm font-medium">
-                Login with FEID
-              </button>
-
-              <div className="text-right">
-                <a href="/authentication" className="text-xs text-blue-600 hover:underline">
-                  Sign in for Syllabus Reviewer/Designer
-                </a>
-              </div>
-            </div>
-          </div>
+        {/* Reviewer/Designer link */}
+        <div className="text-center">
+          <a href="/authentication" className="text-xs text-indigo-600 hover:underline">
+            Syllabus Reviewer / Designer Login
+          </a>
         </div>
       </div>
     </div>

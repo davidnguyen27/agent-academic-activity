@@ -1,59 +1,32 @@
 import { lazy, Suspense } from "react";
 import { Route } from "react-router-dom";
-import UserLayout from "@/layouts/user/userLayout";
+import UserLayout from "@/layouts/user/Layout";
+import PrivateRoute from "./PrivateRoute";
 
-const UserHome = lazy(() => import("@/pages/user/home/userHome"));
-const ListCurriculum = lazy(() => import("@/pages/user/curriculum/ListCurriculum"));
-const DetailCurriculum = lazy(() => import("@/pages/user/curriculum/DetailCurriculum"));
-const ListSubject = lazy(() => import("@/pages/user/subject/ListSubject"));
-const DetailSubject = lazy(() => import("@/pages/user/subject/DetailSubject"));
+const ChatPage = lazy(() => import("@/pages/user/Chat"));
 
 const UserRoutes = (
   <Route
     path="/user"
     element={
-      // <PrivateRoute>
-      <UserLayout />
-      // </PrivateRoute>
+      <PrivateRoute allowedRoles={["Student"]}>
+        <UserLayout />
+      </PrivateRoute>
     }
   >
     <Route
-      index
+      path="chat"
       element={
         <Suspense>
-          <UserHome />
+          <ChatPage />
         </Suspense>
       }
     />
     <Route
-      path="curriculum"
+      path="chat/:id"
       element={
         <Suspense>
-          <ListCurriculum />
-        </Suspense>
-      }
-    />
-    <Route
-      path="curriculum/:id"
-      element={
-        <Suspense>
-          <DetailCurriculum />
-        </Suspense>
-      }
-    />
-    <Route 
-      path="subjects"
-      element={
-        <Suspense>
-          <ListSubject />
-        </Suspense>
-      }
-    />
-    <Route
-      path="subjects/:id"
-      element={
-        <Suspense>
-          <DetailSubject />
+          <ChatPage />
         </Suspense>
       }
     />

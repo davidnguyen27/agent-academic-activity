@@ -3,7 +3,7 @@ import { SubjectInput } from "@/utils/validate/subject.schema";
 
 export const subjectService = {
   createSubject: async (data: SubjectInput) => {
-    const response = await axiosInstance.post("/api/subject/create-subject", data);
+    const response = await axiosInstance.post("/api/subjects/", data);
     return response.data;
   },
 
@@ -15,24 +15,24 @@ export const subjectService = {
     sortType = "Ascending",
     isDelete = false,
   }: Params) => {
-    const response = await axiosInstance.get("/api/subject/get-all-subjects", {
+    const response = await axiosInstance.get("/api/subjects", {
       params: { pageNumber, pageSize, search, sortBy, sortType, isDelete },
     });
     return response.data;
   },
 
   getSubjectById: async (id: string) => {
-    const response = await axiosInstance.get(`/api/subject/get-subject-by-id/${id}`);
+    const response = await axiosInstance.get(`/api/subjects/${id}`);
     return response.data;
   },
 
   updateSubject: async (id: string, data: SubjectInput) => {
-    const response = await axiosInstance.put(`/api/subject/update-subject/${id}`, data);
+    const response = await axiosInstance.put(`/api/subjects/${id}`, data);
     return response.data;
   },
 
   deleteSubject: async (id: string) => {
-    const response = await axiosInstance.delete(`/api/subject/delete-subject/${id}`);
+    const response = await axiosInstance.delete(`/api/subjects/${id}`);
     return response.data;
   },
 };

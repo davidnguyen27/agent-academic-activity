@@ -3,29 +3,29 @@ import { AssessmentInput } from "@/utils/validate/assessment.schema";
 
 export const assessmentService = {
   createAssessment: async (data: AssessmentInput) => {
-    const response = await axiosInstance.post("/api/assessment/create-Assessment", data);
+    const response = await axiosInstance.post("/api/assessments/", data);
     return response.data;
   },
 
   getAllAssessments: async ({ pageNumber, pageSize, search, sortBy, sortType, isDelete }: Params) => {
-    const response = await axiosInstance.get("/api/assessment/get-all-Assessments", {
+    const response = await axiosInstance.get("/api/assessments/", {
       params: { pageNumber, pageSize, search, sortBy, sortType, isDelete },
     });
     return response.data;
   },
 
   getAssessmentById: async (id: string) => {
-    const response = await axiosInstance.get(`/api/assessment/get-assessment-by-id/${id}`);
+    const response = await axiosInstance.get(`/api/assessments/${id}`);
     return response.data;
   },
 
   updateAssessment: async (id: string, data: AssessmentInput) => {
-    const response = await axiosInstance.put(`/api/assessment/update-assessment/${id}`, data);
+    const response = await axiosInstance.put(`/api/assessments/${id}`, data);
     return response.data;
   },
 
   deleteAssessment: async (id: string) => {
-    const response = await axiosInstance.delete(`/api/assessment/delete-assessment/${id}`);
+    const response = await axiosInstance.delete(`/api/assessments/${id}`);
     return response.data;
   },
 };
