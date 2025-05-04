@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const studentSchema = z.object({
   fullName: z.string().min(1, "Full name is required"),
-  studentCode: z.string().optional(), // nếu cần bắt buộc thì dùng `.min(1)`
+  studentCode: z.string().optional(),
   majorName: z.string().optional(),
   majorId: z.string().min(1, "Major is required"),
   gender: z.enum(["Male", "Female", "Other"]).optional(),
@@ -26,15 +26,6 @@ export const studentSchema = z.object({
       message: "Intake year must be a 4-digit year",
     }),
   email: z.string().email("Email is not valid"),
-  isActive: z.boolean().optional(),
-  role: z.string().optional(),
-  accessToken: z.string().nullable().optional(),
-  refreshToken: z.string().nullable().optional(),
-  expiredRefreshToken: z.string().nullable().optional(),
-  createdAt: z.string().optional(),
-  updatedAt: z.string().optional(),
-  deletedAt: z.string().nullable().optional(),
-  isDeleted: z.boolean().optional(),
 });
 
 export type UserFormData = z.infer<typeof studentSchema>;

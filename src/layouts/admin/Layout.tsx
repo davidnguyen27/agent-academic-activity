@@ -5,7 +5,7 @@ import { Outlet } from "react-router-dom";
 
 export default function AdminLayout() {
   return (
-    <div className="flex min-h-screen h-screen bg-gray-50">
+    <div className="flex min-h-screen h-screen bg-gray-200">
       <SideBar />
       <div className="flex-1 flex flex-col">
         <Header />

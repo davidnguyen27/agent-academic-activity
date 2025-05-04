@@ -7,7 +7,7 @@ export const comboSchema = z.object({
   description: z.string().min(1, "description is required"),
   isActive: z.boolean(),
   isApproved: z.boolean(),
-  majorId: z.string().min(1, "Major is required"),
+  programId: z.string().min(1, "Program is required"),
 });
 
 export type ComboFormData = z.infer<typeof comboSchema>;

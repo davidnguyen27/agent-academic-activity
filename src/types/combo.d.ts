@@ -6,7 +6,7 @@ interface Combo {
   description: string;
   isActive: boolean;
   isApproved: boolean;
-  majorId: string;
+  programId: string;
   createdAt?: string;
   updatedAt?: string;
   deletedAt?: string;

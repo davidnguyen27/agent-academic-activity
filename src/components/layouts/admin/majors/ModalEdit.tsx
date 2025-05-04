@@ -76,7 +76,7 @@ const ModalEditMajor = ({ open, major, onOpenChange, onSuccess }: Props) => {
 
           <div>
             <Label>Start At</Label>
-            <Input type="date" {...register("startAt")} />
+            <Input type="datetime-local" {...register("startAt")} />
             {errors.startAt && <p className="text-red-500 text-sm">{errors.startAt.message}</p>}
           </div>
 

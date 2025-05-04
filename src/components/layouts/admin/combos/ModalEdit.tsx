@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { comboSchema, ComboFormData } from "@/utils/validate/combo.schema";
 import { comboService } from "@/services/combo.service";
 import { toast } from "sonner";
-import { majorService } from "@/services/major.service";
+import { programService } from "@/services/program.service";
 
 interface Props {
   open: boolean;
@@ -20,11 +20,11 @@ interface Props {
 }
 
 const ModalEditCombo = ({ open, combo, onOpenChange, onSuccess }: Props) => {
-  const [majors, setMajors] = useState<Major[]>([]);
+  const [programs, setPrograms] = useState<Program[]>([]);
 
   useEffect(() => {
-    majorService.getAllMajors({ pageSize: 1000 }).then((res) => {
-      setMajors(res.items);
+    programService.getAllPrograms({ pageSize: 1000 }).then((res) => {
+      setPrograms(res.items);
     });
   }, []);
 
@@ -51,6 +51,7 @@ const ModalEditCombo = ({ open, combo, onOpenChange, onSuccess }: Props) => {
         description: combo.description,
         isActive: combo.isActive,
         isApproved: combo.isApproved,
+        programId: combo.programId,
       });
     }
   }, [combo, reset]);
@@ -160,7 +161,7 @@ const ModalEditCombo = ({ open, combo, onOpenChange, onSuccess }: Props) => {
 
             <FormField
               control={form.control}
-              name="majorId"
+              name="programId"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Major</FormLabel>
@@ -171,9 +172,9 @@ const ModalEditCombo = ({ open, combo, onOpenChange, onSuccess }: Props) => {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {majors.map((major) => (
-                        <SelectItem key={major.majorId} value={major.majorId}>
-                          {major.majorName}
+                      {programs.map((program) => (
+                        <SelectItem key={program.programId} value={program.programId}>
+                          {program.programName}
                         </SelectItem>
                       ))}
                     </SelectContent>

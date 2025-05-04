@@ -8,6 +8,7 @@ interface Curriculum {
   isActive: boolean;
   isApproved: boolean;
   majorId: string;
+  programId: string;
   createdAt?: string;
   updatedAt?: string;
   deletedAt?: string;

@@ -1,4 +1,4 @@
-import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -9,10 +9,12 @@ import { programService } from "@/services/program.service";
 import { toast } from "sonner";
 
 interface ProgramCreateDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   onSuccess?: () => void;
 }
 
-const ProgramCreateDialog = ({ onSuccess }: ProgramCreateDialogProps) => {
+const ProgramCreateDialog = ({ open, onOpenChange, onSuccess }: ProgramCreateDialogProps) => {
   const {
     register,
     handleSubmit,
@@ -29,20 +31,17 @@ const ProgramCreateDialog = ({ onSuccess }: ProgramCreateDialogProps) => {
         startAt: new Date(data.startAt).toISOString(),
       };
       await programService.createProgram(finalData);
-      toast.success("Tool created successfully!");
+      toast.success("Program created successfully!");
       reset();
       onSuccess?.();
+      onOpenChange(false);
     } catch {
-      toast.error("Failed to create tool.");
+      toast.error("Failed to create program.");
     }
   };
 
   return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button variant="destructive">Add a program</Button>
-      </DialogTrigger>
-
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Add New Program</DialogTitle>

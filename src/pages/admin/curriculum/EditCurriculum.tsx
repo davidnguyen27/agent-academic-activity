@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { formatDate } from "@/utils/format/date.format";
+import { programService } from "@/services/program.service";
 
 const EditCurriculum = () => {
   const location = useLocation();
@@ -21,6 +22,7 @@ const EditCurriculum = () => {
   const curriculumId = searchParams.get("id");
 
   const navigate = useNavigate();
+  const [programs, setPrograms] = useState<Program[]>([]);
   const [readonlyMajor, setReadonlyMajor] = useState<{ majorName: string; majorCode: string } | null>(null);
   const [timestamps, setTimestamps] = useState<{ createdAt?: string; updatedAt?: string; deletedAt?: string }>({});
 
@@ -37,10 +39,12 @@ const EditCurriculum = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [curriculum, majorRes] = await Promise.all([
+        const [curriculum, majorRes, programRes] = await Promise.all([
           curriculumService.getCurriculumById(curriculumId!),
           majorService.getAllMajors({ pageSize: 1000 }),
+          programService.getAllPrograms({ pageSize: 1000 }),
         ]);
+        setPrograms(programRes.items);
         reset(curriculum);
 
         const foundMajor = majorRes.items.find((m: Major) => m.majorId === curriculum.majorId);
@@ -125,6 +129,26 @@ const EditCurriculum = () => {
         <div>
           <Label>Major</Label>
           <Input disabled value={readonlyMajor ? `${readonlyMajor.majorName} (${readonlyMajor.majorCode})` : ""} />
+        </div>
+
+        <div>
+          <Label>Program</Label>
+          <select
+            {...register("programId")}
+            className="w-full border rounded-md px-3 py-2 text-sm"
+            disabled={isSubmitting}
+            defaultValue=""
+          >
+            <option value="" disabled>
+              Select a program
+            </option>
+            {programs.map((p) => (
+              <option key={p.programId} value={p.programId}>
+                {p.programName} ({p.programCode})
+              </option>
+            ))}
+          </select>
+          {errors.programId && <p className="text-sm text-red-500">{errors.programId.message}</p>}
         </div>
 
         <div className="md:col-span-2 text-sm text-gray-600">

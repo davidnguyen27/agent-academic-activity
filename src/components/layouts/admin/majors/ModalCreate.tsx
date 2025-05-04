@@ -1,4 +1,4 @@
-import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -7,14 +7,14 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { majorSchema, MajorFormData } from "@/utils/validate/major.schema";
 import { majorService } from "@/services/major.service";
 import { toast } from "sonner";
-import { useState } from "react";
 
 interface ModalCreateMajorProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   onSuccess?: () => void;
 }
 
-const ModalCreateMajor = ({ onSuccess }: ModalCreateMajorProps) => {
-  const [open, setOpen] = useState(false);
+const ModalCreateMajor = ({ open, onOpenChange, onSuccess }: ModalCreateMajorProps) => {
   const {
     register,
     handleSubmit,
@@ -34,18 +34,14 @@ const ModalCreateMajor = ({ onSuccess }: ModalCreateMajorProps) => {
       toast.success("Major created successfully!");
       reset();
       onSuccess?.();
-      setOpen(false);
+      onOpenChange(false);
     } catch {
       toast.error("Failed to create major.");
     }
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="destructive">Add a Major</Button>
-      </DialogTrigger>
-
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Add New Major</DialogTitle>

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
@@ -10,15 +10,16 @@ import { Switch } from "@/components/ui/switch";
 import { comboSchema, ComboFormData } from "@/utils/validate/combo.schema";
 import { comboService } from "@/services/combo.service";
 import { toast } from "sonner";
-import { majorService } from "@/services/major.service";
+import { programService } from "@/services/program.service";
 
 interface Props {
-  onSuccess: () => void;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSuccess?: () => void;
 }
 
-const ModalCreateCombo = ({ onSuccess }: Props) => {
-  const [open, setOpen] = useState(false);
-  const [majors, setMajors] = useState<Major[]>([]);
+const ModalCreateCombo = ({ open, onOpenChange, onSuccess }: Props) => {
+  const [programs, setPrograms] = useState<Program[]>([]);
 
   const form = useForm<ComboFormData>({
     resolver: zodResolver(comboSchema),
@@ -39,8 +40,8 @@ const ModalCreateCombo = ({ onSuccess }: Props) => {
   } = form;
 
   useEffect(() => {
-    majorService.getAllMajors({ pageSize: 1000 }).then((res) => {
-      setMajors(res.items);
+    programService.getAllPrograms({ pageSize: 1000 }).then((res) => {
+      setPrograms(res.items);
     });
   }, []);
 
@@ -48,20 +49,16 @@ const ModalCreateCombo = ({ onSuccess }: Props) => {
     try {
       await comboService.createCombo(data);
       toast.success("Combo created successfully");
-      reset(); // Reset form
-      onSuccess(); // Reload data
-      setOpen(false); // Close modal
+      reset();
+      onSuccess?.();
+      onOpenChange(false);
     } catch {
       toast.error("Create failed");
     }
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="default">+ Add Combo</Button>
-      </DialogTrigger>
-
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Create Combo</DialogTitle>
@@ -153,20 +150,20 @@ const ModalCreateCombo = ({ onSuccess }: Props) => {
 
             <FormField
               control={form.control}
-              name="majorId"
+              name="programId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Major</FormLabel>
+                  <FormLabel>Program</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select a major" />
+                        <SelectValue placeholder="Select a program" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {majors.map((major) => (
-                        <SelectItem key={major.majorId} value={major.majorId}>
-                          {major.majorName}
+                      {programs.map((program) => (
+                        <SelectItem key={program.programId} value={program.programId}>
+                          {program.programName}
                         </SelectItem>
                       ))}
                     </SelectContent>

@@ -21,7 +21,8 @@ export const curriculumSchema = z.object({
 
   isApproved: z.boolean(),
 
-  majorId: z.string().uuid("Invalid major ID (must be UUID)."),
+  majorId: z.string().uuid("Major is require"),
+  programId: z.string().uuid("Program is require"),
 });
 
 export type CurriculumFormData = z.infer<typeof curriculumSchema>;

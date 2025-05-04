@@ -1,22 +1,20 @@
-interface User {
-  userId?: string;
+interface Student {
+  studentId: string;
+  studentCode: string;
   fullName: string;
-  studentCode?: string;
-  majorName?: string;
-  majorId?: string;
-  gender?: string;
-  dob?: string;
-  address?: string;
-  phoneNumber?: string;
-  intakeYear?: string;
-  email: string;
-  isActive?: boolean;
-  role?: string;
-  accessToken?: string | null;
-  refreshToken?: string | null;
-  expiredRefreshToken?: string | null;
+  address: string;
+  phoneNumber: string;
+  dob: string;
+  intakeYear: number;
+  gender: string;
+  majorId: string;
   createdAt?: string;
   updatedAt?: string;
   deletedAt?: string | null;
   isDeleted?: boolean;
+  userId: string;
+  user?: {
+    email: string;
+    isActive: boolean;
+  };
 }

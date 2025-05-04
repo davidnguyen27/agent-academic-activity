@@ -26,6 +26,8 @@ import { subjectService } from "@/services/subject.service";
 import { toast } from "sonner";
 import ConfirmDeleteDialog from "@/components/layouts/admin/ModalConfirm";
 import { assessmentService } from "@/services/assessment.service";
+import { TableSkeleton } from "@/components/common/TableSkeleton";
+import { EmptySearchResult } from "@/components/common/EmptySearchResult";
 
 const AssessmentManagement = () => {
   const navigate = useNavigate();
@@ -35,6 +37,7 @@ const AssessmentManagement = () => {
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<"code" | "name" | "default">("default");
+  const [sortType, setSortType] = useState<"Ascending" | "Descending">("Ascending");
   const [deletedFilter, setDeletedFilter] = useState(false);
   const [selectedAssessment, setSelectedAssessment] = useState<Assessment | null>(null);
   const [openDetail, setOpenDetail] = useState(false);
@@ -67,12 +70,13 @@ const AssessmentManagement = () => {
         pageSize,
         search: debouncedSearch,
         sortBy: sortBy === "default" ? undefined : sortBy,
+        sortType,
         isDelete: deletedFilter,
       })
     );
     setAssessments(res.items);
     setTotalPages(res.totalPages);
-  }, [page, pageSize, debouncedSearch, startLoading, sortBy, deletedFilter]);
+  }, [page, pageSize, debouncedSearch, startLoading, sortBy, sortType, deletedFilter]);
 
   const handleOpenDetail = useCallback(async (id: string) => {
     try {
@@ -107,112 +111,152 @@ const AssessmentManagement = () => {
     }
   }, [location.search, openDetail, selectedAssessment, handleOpenDetail]);
 
-  // useEffect(() => {
-  //   if (location.state?.createdSubject) {
-  //     setSubjects((prev) => [location.state.createdSubject, ...prev]);
-  //     window.history.replaceState({}, document.title);
-  //   }
-  // }, [location.state]);
-
   useEffect(() => {
     fetchAssessments();
   }, [fetchAssessments]);
 
   return (
-    <div className="bg-white p-5 shadow-md rounded-2xl">
-      <h1 className="text-2xl font-bold text-blue-500 mb-4">Assessment Management</h1>
+    <div className="bg-white p-6 shadow-md rounded-xl">
+      <h1 className="text-3xl font-bold text-gray-800">Assessment Management</h1>
 
-      <Breadcrumb>
+      <Breadcrumb className="my-6">
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
-              <Link to="/admin/dashboard">Home</Link>
+              <Link to="/admin/dashboard">Dashboard</Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbLink>Assessments</BreadcrumbLink>
+            <BreadcrumbLink asChild>
+              <Link to="/admin/subject">Subjects</Link>
+            </BreadcrumbLink>
           </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbLink asChild>
+              <Link to="/admin/subject/clo-list">CLOs</Link>
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>Assessments</BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 my-6">
-        <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by name..." />
-        <Select onValueChange={(value) => setSortBy(value as "code" | "name" | "default")}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Sort by field" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="default">Default</SelectItem>
-            <SelectItem value="code">Sort by Code</SelectItem>
-            <SelectItem value="name">Sort by Name</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select onValueChange={(value) => setDeletedFilter(value === "true")}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Active or Deleted" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="false">Active</SelectItem>
-            <SelectItem value="true">Deleted</SelectItem>
-          </SelectContent>
-        </Select>
-        <Button variant="destructive" onClick={() => navigate("/admin/assessment/create")}>
-          Add a Assessment
-        </Button>
+      <div className="flex flex-wrap items-end justify-between gap-4 bg-gray-50 p-4 rounded-lg border mb-6">
+        <div className="flex flex-col gap-1">
+          <label className="text-sm text-gray-600">Search</label>
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search by category"
+            className="w-60"
+          />
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <label className="text-sm text-gray-600">Sort By</label>
+          <Select onValueChange={(value) => setSortBy(value as "code" | "name" | "default")} defaultValue="default">
+            <SelectTrigger className="w-44">
+              <SelectValue placeholder="Sort field" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="default">Default</SelectItem>
+              <SelectItem value="code">Code</SelectItem>
+              <SelectItem value="name">Name</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <label className="text-sm text-gray-600">Sort Type</label>
+          <Select onValueChange={(value) => setSortType(value as "Ascending" | "Descending")} defaultValue="Ascending">
+            <SelectTrigger className="w-40">
+              <SelectValue placeholder="Sort Type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Ascending">Ascending</SelectItem>
+              <SelectItem value="Descending">Descending</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <label className="text-sm text-gray-600">Status</label>
+          <Select onValueChange={(value) => setDeletedFilter(value === "true")} defaultValue="false">
+            <SelectTrigger className="w-40">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="false">Active</SelectItem>
+              <SelectItem value="true">Deleted</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="ml-auto">
+          <Button
+            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white"
+            onClick={() => navigate("/admin/subject/clo-list/assessment/create")}
+          >
+            + Add a Assessment
+          </Button>
+        </div>
       </div>
 
       <div className="rounded-lg border overflow-x-auto">
-        <Table>
-          <TableHeader>
+        <Table className="min-w-[1200px]">
+          <TableHeader className="bg-gray-100">
             <TableRow>
-              <TableHead>No.</TableHead>
-              <TableHead>Category</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead>Subject Code</TableHead>
-              <TableHead>Knowledge & Skill</TableHead>
-              <TableHead>Grading Guide</TableHead>
-              <TableHead>Note</TableHead>
-              <TableHead>Created At</TableHead>
-              <TableHead>Updated At</TableHead>
-              <TableHead>Action</TableHead>
+              <TableHead className="w-12 text-center">No.</TableHead>
+              <TableHead className="w-40 truncate">Category</TableHead>
+              <TableHead className="w-40 truncate">Type</TableHead>
+              <TableHead className="w-48 truncate">Subject Code</TableHead>
+              <TableHead className="w-64 truncate">Knowledge & Skill</TableHead>
+              <TableHead className="w-64 truncate">Grading Guide</TableHead>
+              <TableHead className="w-64 truncate">Note</TableHead>
+              <TableHead className="w-48 text-center">Created At</TableHead>
+              <TableHead className="w-48 text-center">Updated At</TableHead>
+              <TableHead className="w-32 text-center">Action</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              <TableRow>
-                <TableCell colSpan={9} className="text-center py-10">
-                  <span className="text-blue-500 animate-pulse">Loading...</span>
-                </TableCell>
-              </TableRow>
+              <TableSkeleton columns={10} />
             ) : assessments.length > 0 ? (
               assessments.map((assessment, index) => (
                 <TableRow key={assessment.assessmentId}>
-                  <TableCell>{(page - 1) * pageSize + index + 1}</TableCell>
-                  <TableCell>{assessment.category}</TableCell>
-                  <TableCell>{assessment.type}</TableCell>
-                  <TableCell>{subjectMap.get(assessment.subjectId || "")}</TableCell>
-                  <TableCell>{assessment.knowledgeAndSkill}</TableCell>
-                  <TableCell>{assessment.gradingGuide}</TableCell>
-                  <TableCell>{assessment.note}</TableCell>
-                  <TableCell>{assessment.createdAt ? new Date(assessment.createdAt).toLocaleString() : "-"}</TableCell>
-                  <TableCell>{assessment.updatedAt ? new Date(assessment.updatedAt).toLocaleString() : "-"}</TableCell>
-                  <TableCell className="flex gap-2">
+                  <TableCell className="text-center">{(page - 1) * pageSize + index + 1}</TableCell>
+                  <TableCell className="truncate max-w-[80px]">{assessment.category}</TableCell>
+                  <TableCell className="truncate max-w-[80px]">{assessment.type}</TableCell>
+                  <TableCell className="truncate max-w-[80px]">{subjectMap.get(assessment.subjectId || "")}</TableCell>
+                  <TableCell className="truncate max-w-[80px]">{assessment.knowledgeAndSkill}</TableCell>
+                  <TableCell className="truncate max-w-[80px]">{assessment.gradingGuide}</TableCell>
+                  <TableCell className="truncate max-w-[80px]">{assessment.note}</TableCell>
+                  <TableCell className="text-center truncate">
+                    {assessment.createdAt ? new Date(assessment.createdAt).toLocaleString() : "-"}
+                  </TableCell>
+                  <TableCell className="text-center truncate">
+                    {assessment.updatedAt ? new Date(assessment.updatedAt).toLocaleString() : "-"}
+                  </TableCell>
+                  <TableCell className="flex justify-center gap-2">
                     <ConfirmDeleteDialog onConfirm={() => handleDelete(assessment.assessmentId)}>
                       <Trash2 size={16} className="cursor-pointer text-red-500" />
                     </ConfirmDeleteDialog>
                     <BadgeInfo
                       size={16}
                       className="cursor-pointer text-blue-500"
-                      onClick={() => navigate(`/admin/assessment/details?id=${assessment.assessmentId}`)}
+                      onClick={() =>
+                        navigate(`/admin/subject/clo-list/assessment/details?id=${assessment.assessmentId}`)
+                      }
                     />
                   </TableCell>
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={9} className="text-center text-gray-400">
-                  No assessments found.
+                <TableCell colSpan={10}>
+                  <EmptySearchResult />
                 </TableCell>
               </TableRow>
             )}

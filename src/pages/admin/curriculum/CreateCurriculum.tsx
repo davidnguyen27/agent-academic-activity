@@ -13,14 +13,19 @@ import { Textarea } from "@/components/ui/textarea";
 import { useEffect, useState } from "react";
 import { majorService } from "@/services/major.service";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { programService } from "@/services/program.service";
 
 const CreateCurriculum = () => {
   const navigate = useNavigate();
   const [majors, setMajors] = useState<Major[]>([]);
+  const [programs, setPrograms] = useState<Program[]>([]);
 
   useEffect(() => {
     majorService.getAllMajors({ pageSize: 1000 }).then((res) => {
       setMajors(res.items);
+    });
+    programService.getAllPrograms({ pageSize: 1000 }).then((res) => {
+      setPrograms(res.items);
     });
   }, []);
 
@@ -112,6 +117,23 @@ const CreateCurriculum = () => {
               {majors.map((major) => (
                 <SelectItem key={major.majorId} value={major.majorId}>
                   {major.majorName}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {errors.majorId && <p className="text-sm text-red-500">{errors.majorId.message}</p>}
+        </div>
+
+        <div>
+          <Label htmlFor="programId">Program</Label>
+          <Select onValueChange={(value) => setValue("programId", value)} defaultValue="">
+            <SelectTrigger>
+              <SelectValue placeholder="Select a program..." />
+            </SelectTrigger>
+            <SelectContent>
+              {programs.map((program) => (
+                <SelectItem key={program.programId} value={program.programId}>
+                  {program.programName}
                 </SelectItem>
               ))}
             </SelectContent>

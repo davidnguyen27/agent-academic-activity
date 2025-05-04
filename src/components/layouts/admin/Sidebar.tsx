@@ -4,13 +4,10 @@ import {
   Menu,
   BookOpenText,
   Archive,
-  Layers,
   Settings2,
   Brain,
   LayoutDashboard,
   ScrollText,
-  ClipboardList,
-  Boxes,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "react-router-dom";
@@ -21,12 +18,9 @@ const navItems = [
   { label: "Students", icon: GraduationCap, to: "/admin/student" },
   { label: "Subjects", icon: BookOpenText, to: "/admin/subject" },
   { label: "Curriculums", icon: ScrollText, to: "/admin/curriculum" },
-  { label: "Assessments", icon: ClipboardList, to: "/admin/assessment" },
   { label: "Materials", icon: Archive, to: "/admin/material" },
   { label: "Tools", icon: Settings2, to: "/admin/tool" },
-  { label: "Majors", icon: Layers, to: "/admin/major" },
   { label: "Program", icon: Brain, to: "/admin/program" },
-  { label: "Combo", icon: Boxes, to: "/admin/combo" },
 ];
 
 const SideBar = () => {

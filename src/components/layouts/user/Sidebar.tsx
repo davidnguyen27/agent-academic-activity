@@ -2,13 +2,14 @@ import { useState, useEffect } from "react";
 import { Plus, ChevronsLeft, ChevronsRight, X, BookOpenText, GraduationCap, Layers, Settings2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import ModalUser from "./ModalUser";
-import { useAuth } from "@/contexts/AuthContext";
+// import { useAuth } from "@/contexts/AuthContext";
 import { sessionService } from "@/services/chat.service";
 import { toast } from "sonner";
 import { useChatSession } from "@/contexts/ChatSessionContext";
 
 export default function UserSidebar() {
   const navigate = useNavigate();
+  const [user, setUser] = useState<Student | null>(null);
   const [collapsed, setCollapsed] = useState(false);
   const [openProfile, setOpenProfile] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -21,8 +22,19 @@ export default function UserSidebar() {
     }[]
   >([]);
 
-  const { user } = useAuth();
+  // const { user } = useAuth();
   const { reloadToken } = useChatSession();
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      try {
+        setUser(JSON.parse(storedUser));
+      } catch (e) {
+        console.error("Failed to parse user from localStorage", e);
+      }
+    }
+  }, []);
 
   const fetchAllTopics = async () => {
     const topics: ("Default" | "Subject" | "Major" | "Program" | "Combo")[] = [

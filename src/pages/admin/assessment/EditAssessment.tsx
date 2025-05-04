@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 
@@ -9,7 +9,13 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 import { assessmentSchema, AssessmentFormData } from "@/utils/validate/assessment.schema";
 import { assessmentService } from "@/services/assessment.service";
 import { subjectService } from "@/services/subject.service";
@@ -46,7 +52,7 @@ const EditAssessment = () => {
     try {
       await assessmentService.updateAssessment(assessmentId!, data);
       toast.success("Assessment updated successfully!");
-      navigate("/admin/assessment");
+      navigate("/admin/subject/clo-list/assessment");
     } catch {
       toast.error("Failed to update assessment.");
     }
@@ -54,7 +60,36 @@ const EditAssessment = () => {
 
   return (
     <div className="bg-white p-6 rounded-xl shadow-md">
-      <h2 className="text-2xl font-bold mb-6 text-blue-600">Edit Assessment</h2>
+      <h2 className="text-3xl font-bold text-gray-800">Edit Assessment</h2>
+      <Breadcrumb className="my-6">
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbLink asChild>
+              <Link to="/admin/dashboard">Dashboard</Link>
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbLink asChild>
+              <Link to="/admin/subject">Subjects</Link>
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbLink asChild>
+              <Link to="/admin/subject/clo-list">CLOs</Link>
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbLink asChild>
+              <Link to="/admin/subject/clo-list/assessment">Assessments</Link>
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>Edit</BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="grid md:grid-cols-2 gap-6">
           {/* Category */}

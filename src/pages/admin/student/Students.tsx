@@ -1,7 +1,6 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
@@ -19,25 +18,29 @@ import {
   BreadcrumbList,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import { BadgeInfo, Trash2 } from "lucide-react";
+import { BadgeInfo } from "lucide-react";
 import { useLoading } from "@/hooks/useLoading";
 import { useDebounce } from "@/hooks/useDebounce";
 import { studentService } from "@/services/student.service";
 import { toast } from "sonner";
 import { TableSkeleton } from "@/components/common/TableSkeleton";
 import { EmptySearchResult } from "@/components/common/EmptySearchResult";
+import { formatDate } from "@/utils/format/date.format";
+import ModalEditStudent from "@/components/layouts/admin/students/ModalEdit";
 
 const StudentManagement = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [students, setStudents] = useState<User[]>([]);
+  const [students, setStudents] = useState<Student[]>([]);
   const [search, setSearch] = useState("");
   const [totalPages, setTotalPages] = useState(1);
   const [page, setPage] = useState(1);
   const [sortBy, setSortBy] = useState<"code" | "name" | "default">("default");
+  const [sortType, setSortType] = useState<"Ascending" | "Descending">("Ascending");
   const [deletedFilter, setDeletedFilter] = useState(false);
-  const [selectedStudent, setSelectedStudent] = useState<User | null>(null);
+  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [openDetail, setOpenDetail] = useState(false);
+  const lastFetchedStudentId = useRef<string | null>(null);
 
   const debouncedSearch = useDebounce(search, 500);
   const { isLoading, startLoading } = useLoading();
@@ -50,41 +53,38 @@ const StudentManagement = () => {
         pageSize,
         search: debouncedSearch,
         sortBy: sortBy === "default" ? undefined : sortBy,
+        sortType,
         isDelete: deletedFilter,
       })
     );
     setStudents(res.items);
     setTotalPages(res.totalPages);
-  }, [page, pageSize, debouncedSearch, startLoading, sortBy, deletedFilter]);
+  }, [page, pageSize, debouncedSearch, startLoading, sortBy, sortType, deletedFilter]);
 
   const handleOpenDetail = useCallback(async (id: string) => {
+    if (lastFetchedStudentId.current === id) return;
     try {
       const data = await studentService.getStudentById(id);
       setSelectedStudent(data);
       setOpenDetail(true);
+      lastFetchedStudentId.current = id;
     } catch {
-      toast.error("Failed to load major details");
+      toast.error("Failed to load student details");
     }
   }, []);
 
-  const handleDeleteStudent = async (id: string) => {
-    try {
-      await studentService.deleteStudent(id);
-      toast.success("Major deleted successfully!");
-      await fetchStudents();
-    } catch {
-      toast.error("Failed to delete major. Try again later.");
-    }
-  };
-
   useEffect(() => {
-    const id = new URLSearchParams(location.search).get("id");
-    if (id && (!openDetail || selectedStudent?.userId !== id)) {
+    const params = new URLSearchParams(location.search);
+    const id = params.get("id");
+
+    if (id && (!openDetail || selectedStudent?.studentId !== id)) {
       handleOpenDetail(id);
     }
+
     if (!id && openDetail) {
       setOpenDetail(false);
       setSelectedStudent(null);
+      lastFetchedStudentId.current = null;
     }
   }, [location.search, openDetail, selectedStudent, handleOpenDetail]);
 
@@ -93,10 +93,10 @@ const StudentManagement = () => {
   }, [fetchStudents]);
 
   return (
-    <div className="bg-white p-5 shadow-md rounded-2xl">
-      <h1 className="text-2xl font-bold text-blue-900 mb-4">Manage Students</h1>
+    <div className="bg-white p-6 shadow-lg rounded-xl">
+      <h1 className="text-3xl font-bold text-gray-800">Student Management</h1>
 
-      <Breadcrumb>
+      <Breadcrumb className="my-6">
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
@@ -110,13 +110,13 @@ const StudentManagement = () => {
         </BreadcrumbList>
       </Breadcrumb>
 
-      <div className="flex flex-wrap items-end justify-between gap-4 bg-gray-50 p-4 rounded-lg border mb-6">
+      <div className="flex flex-wrap items-end gap-4 bg-gray-50 p-4 rounded-lg border mb-6">
         <div className="flex flex-col gap-1">
           <label className="text-sm text-gray-600">Search</label>
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by code..."
+            placeholder="Search by code"
             className="w-60"
           />
         </div>
@@ -136,6 +136,19 @@ const StudentManagement = () => {
         </div>
 
         <div className="flex flex-col gap-1">
+          <label className="text-sm text-gray-600">Sort Type</label>
+          <Select onValueChange={(value) => setSortType(value as "Ascending" | "Descending")} defaultValue="Ascending">
+            <SelectTrigger className="w-40">
+              <SelectValue placeholder="Sort Type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Ascending">Ascending</SelectItem>
+              <SelectItem value="Descending">Descending</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="flex flex-col gap-1">
           <label className="text-sm text-gray-600">Status</label>
           <Select onValueChange={(value) => setDeletedFilter(value === "true")} defaultValue="false">
             <SelectTrigger className="w-40">
@@ -147,60 +160,51 @@ const StudentManagement = () => {
             </SelectContent>
           </Select>
         </div>
-
-        <div className="ml-auto">
-          <Button
-            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white"
-            onClick={() => navigate("/admin/subject/create")}
-          >
-            + Add a Subject
-          </Button>
-        </div>
       </div>
 
-      <div className="rounded-lg border overflow-x-auto">
+      <div className="rounded-lg border overflow-x-auto max-w-full">
         <Table>
-          <TableHeader>
+          <TableHeader className="bg-gray-100">
             <TableRow>
-              <TableHead>No</TableHead>
+              <TableHead className="text-center">#</TableHead>
               <TableHead>Code</TableHead>
-              <TableHead>Name</TableHead>
-              <TableHead>Gender</TableHead>
+              <TableHead>Full Name</TableHead>
+              <TableHead className="text-center">Gender</TableHead>
               <TableHead>Email</TableHead>
-              <TableHead>Address</TableHead>
-              <TableHead>Date of Birth</TableHead>
-              <TableHead>Phone</TableHead>
+              <TableHead className="text-center">Date of Birth</TableHead>
+              <TableHead className="text-center">Is Active</TableHead>
               <TableHead>Action</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              <TableRow>
-                <TableSkeleton columns={9} />
-              </TableRow>
+              <TableSkeleton columns={9} />
             ) : students.length > 0 ? (
               students.map((student, i) => (
                 <TableRow key={student.userId} className="hover:bg-blue-50 transition">
-                  <TableCell>{(page - 1) * pageSize + i + 1}</TableCell>
-                  <TableCell className="max-w-[100px] truncate">{student.studentCode}</TableCell>
-                  <TableCell className="max-w-[150px] truncate">{student.fullName}</TableCell>
-                  <TableCell>{student.gender}</TableCell>
-                  <TableCell className="max-w-[160px] truncate">{student.email}</TableCell>
-                  <TableCell className="max-w-[160px] truncate">{student.address}</TableCell>
-                  <TableCell>{new Date(student.dob || "").toLocaleDateString("vi-VN")}</TableCell>
-                  <TableCell>{student.phoneNumber}</TableCell>
+                  <TableCell className="text-center">{(page - 1) * pageSize + i + 1}</TableCell>
+                  <TableCell className="max-w-[80px] truncate">{student.studentCode}</TableCell>
+                  <TableCell className="max-w-[80px] truncate">{student.fullName}</TableCell>
+                  <TableCell className="max-w-[50px] text-center">{student.gender}</TableCell>
+                  <TableCell className="max-w-[80px] truncate">{student.user?.email ?? "-"}</TableCell>
+                  <TableCell className="max-w-[40px] text-center">{formatDate(student.dob)}</TableCell>
+                  <TableCell className="text-center">
+                    {student.user?.isActive ? (
+                      <span className="inline-flex items-center px-2 py-0.5 text-sm font-medium bg-green-100 text-green-700 rounded-full">
+                        Active
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center px-2 py-0.5 text-sm font-medium bg-red-100 text-red-700 rounded-full">
+                        Inactive
+                      </span>
+                    )}
+                  </TableCell>
                   <TableCell className="flex items-center gap-2">
-                    <Trash2
-                      size={16}
-                      color="red"
-                      className="cursor-pointer"
-                      onClick={() => handleDeleteStudent(student.userId!)}
-                    />
                     <BadgeInfo
                       size={16}
                       color="blue"
                       className="cursor-pointer"
-                      onClick={() => navigate(`?id=${student.userId}`)}
+                      onClick={() => navigate(`?id=${student.studentId}`)}
                     />
                   </TableCell>
                 </TableRow>
@@ -235,6 +239,18 @@ const StudentManagement = () => {
           </PaginationContent>
         </Pagination>
       </div>
+
+      <ModalEditStudent
+        open={openDetail}
+        onOpenChange={(open) => {
+          setOpenDetail(open);
+          if (!open) {
+            navigate("/admin/student", { replace: true });
+          }
+        }}
+        student={selectedStudent}
+        onSuccess={fetchStudents}
+      />
     </div>
   );
 };

@@ -8,7 +8,6 @@ export const subjectSchema = z.object({
   isApproved: z.boolean(),
   noCredit: z.number().min(0, "Credits must be >= 0"),
   approvedDate: z.string().min(1, "Approved Date is required"),
-  curriculumId: z.string().min(1, "Curriculum ID is required"),
   sessionNo: z.number().min(0, "Session number must be >= 0"),
   syllabusName: z.string().min(1, "Syllabus name is required"),
   degreeLevel: z.string().min(1, "Degree level is required"),

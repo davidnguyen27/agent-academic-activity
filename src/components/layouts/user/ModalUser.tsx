@@ -10,11 +10,12 @@ import { userService } from "@/services/user.service";
 import { toast } from "sonner";
 import { useEffect, useMemo, useState } from "react";
 import { majorService } from "@/services/major.service";
+import { UserFormData } from "@/utils/validate/student.schema";
 
 interface ModalUserProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  user: User | null;
+  user: Student | null;
 }
 
 const ModalUser = ({ open, onOpenChange, user }: ModalUserProps) => {
@@ -37,10 +38,11 @@ const ModalUser = ({ open, onOpenChange, user }: ModalUserProps) => {
     }
   }, [open]);
 
-  const form = useForm<User>({
+  const form = useForm<UserFormData>({
     defaultValues: {
       fullName: user?.fullName,
-      gender: user?.gender,
+      gender:
+        user?.gender === "Male" || user?.gender === "Female" || user?.gender === "Other" ? user.gender : undefined,
       dob: user?.dob ? user.dob.slice(0, 10) : "",
       address: user?.address,
       phoneNumber: user?.phoneNumber,
@@ -58,7 +60,7 @@ const ModalUser = ({ open, onOpenChange, user }: ModalUserProps) => {
     navigate("/");
   };
 
-  const onSubmit = async (data: User) => {
+  const onSubmit = async (data: UserFormData) => {
     try {
       await userService.updateStudent({
         fullName: data.fullName || "",

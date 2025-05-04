@@ -159,7 +159,12 @@ const EditSubject = () => {
                   <FormItem>
                     <FormLabel>Credits</FormLabel>
                     <FormControl>
-                      <Input type="number" placeholder="e.g., 3" {...field} />
+                      <Input
+                        type="number"
+                        placeholder="e.g., 3"
+                        {...field}
+                        onChange={(e) => field.onChange(+e.target.value)}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -231,7 +236,7 @@ const EditSubject = () => {
                   <FormItem>
                     <FormLabel>Student Tasks</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g., Assignments, Projects..." {...field} />
+                      <Textarea rows={5} placeholder="e.g., Assignments, Projects..." {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -244,7 +249,7 @@ const EditSubject = () => {
                   <FormItem>
                     <FormLabel>Description</FormLabel>
                     <FormControl>
-                      <Textarea rows={3} placeholder="General overview..." {...field} />
+                      <Textarea rows={5} placeholder="General overview..." {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

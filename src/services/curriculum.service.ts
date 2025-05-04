@@ -35,4 +35,46 @@ export const curriculumService = {
     const response = await axiosInstance.delete(`/api/curriculums/${id}`);
     return response.data;
   },
+
+  overviewCurriculums: async ({
+    curriculumId,
+    pageNumber = 1,
+    pageSize = 10,
+    semesterNo = 1,
+  }: {
+    curriculumId: string;
+    pageNumber: number;
+    pageSize: number;
+    semesterNo: number;
+  }) => {
+    const response = await axiosInstance.get("/api/subject-in-curriculums", {
+      params: { curriculumId, pageNumber, pageSize, semesterNo },
+    });
+    return response.data;
+  },
+
+  createSubjectInCurriculum: async ({
+    curriculumId,
+    subjectId,
+    semesterNo,
+  }: {
+    curriculumId: string;
+    subjectId: string;
+    semesterNo: number;
+  }) => {
+    const response = await axiosInstance.post(`/api/subject-in-curriculums?curriculumId=${curriculumId}`, [
+      {
+        subjectId,
+        semesterNo,
+      },
+    ]);
+    return response.data;
+  },
+
+  deleteSubjectsInCurr: async (curriculumId: string) => {
+    const response = await axiosInstance.delete(
+      `/api/subject-in-curriculums/all-subjects?curriculumId=${curriculumId}`
+    );
+    return response.data;
+  },
 };

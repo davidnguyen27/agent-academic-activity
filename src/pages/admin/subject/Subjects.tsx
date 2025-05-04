@@ -37,6 +37,7 @@ const SubjectManagement = () => {
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<"code" | "name" | "default">("default");
+  const [sortType, setSortType] = useState<"Ascending" | "Descending">("Ascending");
   const [deletedFilter, setDeletedFilter] = useState(false);
   const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
   const [openDetail, setOpenDetail] = useState(false);
@@ -54,12 +55,13 @@ const SubjectManagement = () => {
         pageSize,
         search: debouncedSearch,
         sortBy: sortBy === "default" ? undefined : sortBy,
+        sortType,
         isDelete: deletedFilter,
       })
     );
     setSubjects(res.items);
     setTotalPages(res.totalPages);
-  }, [page, pageSize, debouncedSearch, startLoading, sortBy, deletedFilter]);
+  }, [page, pageSize, debouncedSearch, startLoading, sortBy, sortType, deletedFilter]);
 
   const handleOpenDetail = useCallback(async (id: string) => {
     try {
@@ -152,6 +154,19 @@ const SubjectManagement = () => {
         </div>
 
         <div className="flex flex-col gap-1">
+          <label className="text-sm text-gray-600">Sort Type</label>
+          <Select onValueChange={(value) => setSortType(value as "Ascending" | "Descending")} defaultValue="Ascending">
+            <SelectTrigger className="w-40">
+              <SelectValue placeholder="Sort Type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Ascending">Ascending</SelectItem>
+              <SelectItem value="Descending">Descending</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="flex flex-col gap-1">
           <label className="text-sm text-gray-600">Status</label>
           <Select onValueChange={(value) => setDeletedFilter(value === "true")} defaultValue="false">
             <SelectTrigger className="w-40">
@@ -164,7 +179,15 @@ const SubjectManagement = () => {
           </Select>
         </div>
 
-        <div className="ml-auto">
+        <div className="ml-auto flex gap-2">
+          <Button variant="outline" onClick={() => navigate("/admin/subject/prerequisite")}>
+            Prerequisite Overview
+          </Button>
+
+          <Button variant="outline" onClick={() => navigate("/admin/subject/clo-list")}>
+            CLO Overview
+          </Button>
+
           <Button
             className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white"
             onClick={() => navigate("/admin/subject/create")}
@@ -191,9 +214,7 @@ const SubjectManagement = () => {
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              <TableRow>
-                <TableSkeleton columns={8} />
-              </TableRow>
+              <TableSkeleton columns={8} />
             ) : subjects.length > 0 ? (
               subjects.map((subject, index) => (
                 <TableRow key={subject.subjectId}>
