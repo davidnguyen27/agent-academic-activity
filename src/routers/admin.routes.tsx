@@ -24,6 +24,7 @@ const EditCurriculum = lazy(() => import("@/pages/admin/curriculum/EditCurriculu
 
 const ProgramManagement = lazy(() => import("@/pages/admin/program/Programs"));
 const POManagement = lazy(() => import("@/pages/admin/po/POs"));
+const PLOManagement = lazy(() => import("@/pages/admin/plo/PLOManagement"));
 
 const ComboManagement = lazy(() => import("@/pages/admin/combo/Combos"));
 
@@ -217,6 +218,14 @@ const AdminRoutes = (
       element={
         <Suspense>
           <PrerequisiteManagement />
+        </Suspense>
+      }
+    />
+    <Route
+      path="curriculum/plo"
+      element={
+        <Suspense>
+          <PLOManagement />
         </Suspense>
       }
     />

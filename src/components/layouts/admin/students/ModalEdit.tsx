@@ -26,7 +26,6 @@ const ModalEditStudent = ({ open, onOpenChange, student, onSuccess }: Props) => 
       address: "",
       dob: "",
       intakeYear: "",
-      email: "",
       gender: "Male",
       phoneNumber: "",
       majorId: "",
@@ -49,24 +48,24 @@ const ModalEditStudent = ({ open, onOpenChange, student, onSuccess }: Props) => 
         address: student.address || "",
         dob: student.dob?.split("T")[0] || "",
         intakeYear: student.intakeYear?.toString() || "",
-        email: student.user?.email || "",
         gender: ["Male", "Female", "Other"].includes(student.gender)
           ? (student.gender as "Male" | "Female" | "Other")
           : "Male",
         phoneNumber: student.phoneNumber || "",
         majorId: student.majorId || "",
-        majorName: "", // Optional: nếu cần
+        majorName: "",
       });
     }
-  }, [student, reset]);
+  }, [student, open, reset]);
 
   const onSubmit = async (data: UserFormData) => {
     if (!student?.userId) return;
     try {
       await studentService.updateStudent(student.userId, {
         ...data,
-        isActive: true,
-        role: "Student",
+        email: student?.user?.email || "",
+        isActive: student?.user?.isActive ?? true,
+        role: student?.user?.role || "Student",
       });
       toast.success("Student updated successfully!");
       onOpenChange(false);
@@ -106,19 +105,6 @@ const ModalEditStudent = ({ open, onOpenChange, student, onSuccess }: Props) => 
                   <FormLabel>Student Code</FormLabel>
                   <FormControl>
                     <Input {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email</FormLabel>
-                  <FormControl>
-                    <Input type="email" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

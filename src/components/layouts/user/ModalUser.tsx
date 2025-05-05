@@ -4,50 +4,74 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { userService } from "@/services/user.service";
 import { toast } from "sonner";
 import { useEffect, useMemo, useState } from "react";
 import { majorService } from "@/services/major.service";
-import { UserFormData } from "@/utils/validate/student.schema";
+import { studentSchema, UserFormData } from "@/utils/validate/student.schema";
 
 interface ModalUserProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  user: Student | null;
 }
 
-const ModalUser = ({ open, onOpenChange, user }: ModalUserProps) => {
+const ModalUser = ({ open, onOpenChange }: ModalUserProps) => {
   const navigate = useNavigate();
   const { setUser } = useAuth();
   const [majors, setMajors] = useState<Major[]>([]);
-
-  // Map majorId -> majorName
-  const majorMap = useMemo(() => {
-    const map = new Map<string, string>();
-    majors.forEach((m) => map.set(m.majorId, m.majorName));
-    return map;
-  }, [majors]);
+  const [user, setUserData] = useState<Student | null>(null);
 
   useEffect(() => {
     if (open) {
+      const stored = localStorage.getItem("user");
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          setUserData(parsed);
+        } catch (err) {
+          console.error("Failed to parse user from localStorage", err);
+        }
+      }
+
       majorService.getAllMajors({ pageSize: 1000 }).then((res) => {
         setMajors(res.items || []);
       });
     }
   }, [open]);
 
+  useEffect(() => {
+    if (user) {
+      form.reset({
+        fullName: user.fullName,
+        gender: user.gender === "Male" || user.gender === "Female" || user.gender === "Other" ? user.gender : undefined,
+        dob: user.dob ? user.dob.slice(0, 10) : "",
+        address: user.address,
+        phoneNumber: user.phoneNumber,
+        intakeYear: user.intakeYear?.toString(),
+        majorId: user.majorId || "",
+      });
+    }
+  }, [user]);
+
+  const majorMap = useMemo(() => {
+    const map = new Map<string, string>();
+    majors.forEach((m) => map.set(m.majorId, m.majorName));
+    return map;
+  }, [majors]);
+
   const form = useForm<UserFormData>({
+    resolver: zodResolver(studentSchema),
     defaultValues: {
-      fullName: user?.fullName,
-      gender:
-        user?.gender === "Male" || user?.gender === "Female" || user?.gender === "Other" ? user.gender : undefined,
-      dob: user?.dob ? user.dob.slice(0, 10) : "",
-      address: user?.address,
-      phoneNumber: user?.phoneNumber,
-      intakeYear: user?.intakeYear?.toString(),
-      majorId: user?.majorId || "",
+      fullName: "",
+      gender: undefined,
+      dob: "",
+      address: "",
+      phoneNumber: "",
+      intakeYear: "",
+      majorId: "",
     },
   });
 
@@ -200,7 +224,7 @@ const ModalUser = ({ open, onOpenChange, user }: ModalUserProps) => {
               )}
             />
 
-            {/* Major Select */}
+            {/* Major */}
             <FormField
               control={form.control}
               name="majorId"
@@ -227,6 +251,21 @@ const ModalUser = ({ open, onOpenChange, user }: ModalUserProps) => {
                 </FormItem>
               )}
             />
+
+            {/* Email */}
+            {/* <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem className="col-span-2">
+                  <FormLabel>Email</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Email" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            /> */}
 
             {/* Buttons */}
             <div className="flex flex-col md:flex-row gap-4 col-span-2 mt-4">

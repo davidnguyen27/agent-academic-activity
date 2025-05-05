@@ -22,7 +22,11 @@ const EditMaterial = () => {
   const materialId = searchParams.get("id");
 
   const [subjects, setSubjects] = useState<Subject[]>([]);
-  const [timestamps, setTimestamps] = useState<{ createdAt?: string; updatedAt?: string; deletedAt?: string }>({});
+  const [timestamps, setTimestamps] = useState<{
+    createdAt?: string;
+    updatedAt?: string;
+    deletedAt?: string;
+  }>({});
 
   const {
     register,
@@ -31,9 +35,12 @@ const EditMaterial = () => {
     control,
     reset,
     setValue,
+    watch,
   } = useForm<MaterialFormData>({
     resolver: zodResolver(materialSchema),
   });
+
+  const subjectId = watch("subjectId");
 
   useEffect(() => {
     const fetchData = async () => {
@@ -69,97 +76,75 @@ const EditMaterial = () => {
   };
 
   return (
-    <div className="bg-white p-5 rounded-xl shadow-md">
-      <h2 className="text-2xl font-bold mb-6 text-blue-500">Edit Material</h2>
+    <div className="bg-white p-8 rounded-xl shadow-lg border border-gray-200">
+      <h2 className="text-3xl font-bold text-blue-600 mb-8">Edit Material</h2>
+
       <form onSubmit={handleSubmit(onSubmit)} className="grid md:grid-cols-2 gap-6">
-        <div>
-          <Label htmlFor="materialCode">Material Code</Label>
-          <Input id="materialCode" {...register("materialCode")} />
-          {errors.materialCode && <p className="text-sm text-red-500">{errors.materialCode.message}</p>}
-        </div>
+        {/* Text Inputs */}
+        {[
+          { label: "Material Code", name: "materialCode" },
+          { label: "Material Name", name: "materialName" },
+          { label: "Author", name: "author" },
+          { label: "Publisher", name: "publisher" },
+          { label: "Published Date", name: "publishedDate", type: "datetime-local" },
+          { label: "Edition", name: "edition" },
+          { label: "ISBN", name: "isbn" },
+        ].map(({ label, name, type }) => (
+          <div key={name}>
+            <Label htmlFor={name}>{label}</Label>
+            <Input
+              id={name}
+              type={type || "text"}
+              placeholder={`Enter ${label.toLowerCase()}...`}
+              {...register(name as keyof MaterialFormData)}
+              className="mt-1"
+            />
+            {errors[name as keyof MaterialFormData] && (
+              <p className="text-sm text-red-500 mt-1">{errors[name as keyof MaterialFormData]?.message as string}</p>
+            )}
+          </div>
+        ))}
 
-        <div>
-          <Label htmlFor="materialName">Material Name</Label>
-          <Input id="materialName" {...register("materialName")} />
-          {errors.materialName && <p className="text-sm text-red-500">{errors.materialName.message}</p>}
-        </div>
-
+        {/* Textareas */}
         <div className="md:col-span-2">
           <Label htmlFor="materialDescription">Description</Label>
-          <Textarea id="materialDescription" {...register("materialDescription")} rows={3} />
-          {errors.materialDescription && <p className="text-sm text-red-500">{errors.materialDescription.message}</p>}
-        </div>
-
-        <div>
-          <Label htmlFor="author">Author</Label>
-          <Input id="author" {...register("author")} />
-          {errors.author && <p className="text-sm text-red-500">{errors.author.message}</p>}
-        </div>
-
-        <div>
-          <Label htmlFor="publisher">Publisher</Label>
-          <Input id="publisher" {...register("publisher")} />
-          {errors.publisher && <p className="text-sm text-red-500">{errors.publisher.message}</p>}
-        </div>
-
-        <div>
-          <Label htmlFor="publishedDate">Published Date</Label>
-          <Input id="publishedDate" type="datetime-local" {...register("publishedDate")} />
-          {errors.publishedDate && <p className="text-sm text-red-500">{errors.publishedDate.message}</p>}
-        </div>
-
-        <div>
-          <Label htmlFor="edition">Edition</Label>
-          <Input id="edition" {...register("edition")} />
-          {errors.edition && <p className="text-sm text-red-500">{errors.edition.message}</p>}
-        </div>
-
-        <div>
-          <Label htmlFor="isbn">ISBN</Label>
-          <Input id="isbn" {...register("isbn")} />
-          {errors.isbn && <p className="text-sm text-red-500">{errors.isbn.message}</p>}
+          <Textarea
+            id="materialDescription"
+            rows={3}
+            placeholder="Enter material description..."
+            {...register("materialDescription")}
+          />
+          {errors.materialDescription && (
+            <p className="text-sm text-red-500 mt-1">{errors.materialDescription.message}</p>
+          )}
         </div>
 
         <div className="md:col-span-2">
           <Label htmlFor="note">Note</Label>
-          <Textarea id="note" {...register("note")} rows={2} />
-          {errors.note && <p className="text-sm text-red-500">{errors.note.message}</p>}
+          <Textarea id="note" rows={2} placeholder="Enter note (optional)..." {...register("note")} />
+          {errors.note && <p className="text-sm text-red-500 mt-1">{errors.note.message}</p>}
         </div>
 
-        <div>
-          <Label>Is Main Material</Label>
-          <Controller
-            control={control}
-            name="isMainMaterial"
-            render={({ field }) => <Switch checked={field.value} onCheckedChange={field.onChange} />}
-          />
-        </div>
+        {/* Switches */}
+        {[
+          { label: "Is Main Material", name: "isMainMaterial" },
+          { label: "Is Hard Copy", name: "isHardCopy" },
+          { label: "Is Online", name: "isOnline" },
+        ].map(({ label, name }) => (
+          <div key={name}>
+            <Label>{label}</Label>
+            <Controller
+              control={control}
+              name={name as keyof MaterialFormData}
+              render={({ field }) => <Switch checked={!!field.value} onCheckedChange={field.onChange} />}
+            />
+          </div>
+        ))}
 
-        <div>
-          <Label>Is Hard Copy</Label>
-          <Controller
-            control={control}
-            name="isHardCopy"
-            render={({ field }) => <Switch checked={field.value} onCheckedChange={field.onChange} />}
-          />
-        </div>
-
-        <div>
-          <Label>Is Online</Label>
-          <Controller
-            control={control}
-            name="isOnline"
-            render={({ field }) => <Switch checked={field.value} onCheckedChange={field.onChange} />}
-          />
-        </div>
-
+        {/* Subject Select */}
         <div className="md:col-span-2">
           <Label htmlFor="subjectId">Subject</Label>
-          <Select
-            value={undefined} // fix controlled input warning
-            onValueChange={(value) => setValue("subjectId", value)}
-            defaultValue=""
-          >
+          <Select value={subjectId} onValueChange={(value) => setValue("subjectId", value)}>
             <SelectTrigger>
               <SelectValue placeholder="Select a subject..." />
             </SelectTrigger>
@@ -171,17 +156,19 @@ const EditMaterial = () => {
               ))}
             </SelectContent>
           </Select>
-          {errors.subjectId && <p className="text-sm text-red-500">{errors.subjectId.message}</p>}
+          {errors.subjectId && <p className="text-sm text-red-500 mt-1">{errors.subjectId.message}</p>}
         </div>
 
-        <div className="md:col-span-2 text-sm text-gray-600 space-y-1">
+        {/* Timestamps */}
+        <div className="md:col-span-2 text-sm text-gray-500 space-y-1">
           {timestamps.createdAt && <p>Created At: {formatDate(timestamps.createdAt)}</p>}
           {timestamps.updatedAt && <p>Updated At: {formatDate(timestamps.updatedAt)}</p>}
           {timestamps.deletedAt && <p>Deleted At: {formatDate(timestamps.deletedAt)}</p>}
         </div>
 
+        {/* Submit */}
         <div className="md:col-span-2">
-          <Button type="submit" disabled={isSubmitting}>
+          <Button type="submit" disabled={isSubmitting} className="w-full">
             {isSubmitting ? "Updating..." : "Update Material"}
           </Button>
         </div>

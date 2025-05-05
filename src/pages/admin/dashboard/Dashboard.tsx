@@ -1,37 +1,94 @@
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { useEffect, useMemo, useState } from "react";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 
+import { dashboardService } from "@/services/dashboard.service";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { GraduationCap, Users, BookOpen, CalendarCheck } from "lucide-react";
-import { useState } from "react";
+import renderLineChart from "@/components/layouts/admin/charts/Chart";
+import { studentService } from "@/services/student.service";
+import { majorService } from "@/services/major.service";
+import { curriculumService } from "@/services/curriculum.service";
+import { groupByCreatedAt } from "@/utils/groupByDate.utils";
+
+interface DailyData {
+  date: string;
+  count: number;
+}
 
 const Dashboard = () => {
   const [date, setDate] = useState(new Date());
+  const [report, setReport] = useState<{
+    totalStudents: number;
+    totalMajors: number;
+    totalCurriculums: number;
+    totalMessages: number;
+  } | null>(null);
 
-  const studentsByMajor = [
-    { major: "CNTT", students: 450 },
-    { major: "Kinh tế", students: 300 },
-    { major: "Ngôn ngữ", students: 220 },
-    { major: "Thiết kế", students: 130 },
-  ];
+  const [isLoading, setIsLoading] = useState(true);
+  const [dailyStudents, setDailyStudents] = useState<DailyData[]>([]);
+  const [dailyMajors, setDailyMajors] = useState<DailyData[]>([]);
+  const [dailyCurriculums, setDailyCurriculums] = useState<DailyData[]>([]);
+  const [dailyMessages] = useState<DailyData[]>([]);
 
-  const topicsByMonth = [
-    { month: "1", topics: 5 },
-    { month: "2", topics: 8 },
-    { month: "3", topics: 12 },
-    { month: "4", topics: 20 },
-    { month: "5", topics: 15 },
-    { month: "6", topics: 18 },
-  ];
+  const barColors = ["#3b82f6", "#f97316", "#10b981", "#a855f7"];
+
+  const summaryChartData = useMemo(
+    () => [
+      { label: "Students", value: report?.totalStudents ?? 0 },
+      { label: "Majors", value: report?.totalMajors ?? 0 },
+      { label: "Curriculums", value: report?.totalCurriculums ?? 0 },
+      { label: "Messages", value: report?.totalMessages ?? 0 },
+    ],
+    [report]
+  );
+
+  useEffect(() => {
+    const fetchReport = async () => {
+      setIsLoading(true);
+      try {
+        const res = await dashboardService.adminReport();
+        if (res.isSucess) {
+          const { totalStudents, totalMajors, totalCurriculums, totalMessages } = res.data;
+          setReport({ totalStudents, totalMajors, totalCurriculums, totalMessages });
+        }
+      } catch {
+        console.error("Failed to fetch dashboard report");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    const fetchDailyData = async () => {
+      try {
+        const [studentsRes, majorsRes, curriculumsRes] = await Promise.all([
+          studentService.getAllStudents({ pageSize: 1000 }),
+          majorService.getAllMajors({ pageSize: 1000 }),
+          curriculumService.getAllCurriculums({ pageSize: 1000 }),
+        ]);
+
+        setDailyStudents(groupByCreatedAt(studentsRes.items));
+        setDailyMajors(groupByCreatedAt(majorsRes.items));
+        setDailyCurriculums(groupByCreatedAt(curriculumsRes.items));
+      } catch (error) {
+        console.error("Failed to fetch daily data", error);
+      }
+    };
+
+    fetchReport();
+    fetchDailyData();
+  }, []);
+
+  const renderValue = (value?: number) =>
+    isLoading ? <div className="h-6 w-20 bg-gray-200 rounded animate-pulse" /> : value;
 
   return (
     <div className="space-y-6">
-      {/* Header Welcome */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-800">Xin chào, Admin 👋</h1>
+        <h1 className="text-2xl font-bold text-gray-800">Welcome back, Admin 👋</h1>
         <p className="text-sm text-muted-foreground">
-          Đây là bảng điều khiển tổng quan hệ thống học vụ. Kiểm tra các chỉ số và hoạt động gần đây.
+          This is your academic management dashboard. Check the latest stats and system activity.
         </p>
       </div>
 
@@ -39,97 +96,89 @@ const Dashboard = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Tổng sinh viên</CardTitle>
+            <CardTitle className="text-sm font-medium">Total Students</CardTitle>
             <GraduationCap className="h-5 w-5 text-primary" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">1,250</div>
-            <p className="text-xs text-muted-foreground">Tăng 3% so với tháng trước</p>
+            <div className="text-2xl font-bold">{renderValue(report?.totalStudents)}</div>
+            <p className="text-xs text-muted-foreground">Up 3% from last month</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Giảng viên</CardTitle>
+            <CardTitle className="text-sm font-medium">Total Majors</CardTitle>
             <Users className="h-5 w-5 text-primary" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">85</div>
-            <p className="text-xs text-muted-foreground">Ổn định trong 3 tháng</p>
+            <div className="text-2xl font-bold">{renderValue(report?.totalMajors)}</div>
+            <p className="text-xs text-muted-foreground">Currently active</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Môn học</CardTitle>
+            <CardTitle className="text-sm font-medium">Curriculums</CardTitle>
             <BookOpen className="h-5 w-5 text-primary" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">45</div>
-            <p className="text-xs text-muted-foreground">Đã cập nhật 2 môn mới</p>
+            <div className="text-2xl font-bold">{renderValue(report?.totalCurriculums)}</div>
+            <p className="text-xs text-muted-foreground">Approved programs</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Lịch bảo vệ</CardTitle>
+            <CardTitle className="text-sm font-medium">AI Messages</CardTitle>
             <CalendarCheck className="h-5 w-5 text-primary" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">12 sự kiện</div>
-            <p className="text-xs text-muted-foreground">Tuần này</p>
+            <div className="text-2xl font-bold">{renderValue(report?.totalMessages)}</div>
+            <p className="text-xs text-muted-foreground">Sent successfully</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Charts + Calendar */}
+      {/* Summary Bar Chart + Calendar */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Biểu đồ 1 */}
         <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle>Sinh viên theo chuyên ngành</CardTitle>
+            <CardTitle>Overview Chart</CardTitle>
           </CardHeader>
           <CardContent className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={studentsByMajor}>
+              <BarChart data={summaryChartData}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="major" />
+                <XAxis dataKey="label" />
                 <YAxis />
                 <Tooltip />
-                <Bar dataKey="students" fill="#3b82f6" />
+                <Bar dataKey="value">
+                  {summaryChartData.map((_, index) => (
+                    <Cell key={index} fill={barColors[index % barColors.length]} />
+                  ))}
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
 
-        {/* Lịch dương */}
         <Card>
           <CardHeader>
-            <CardTitle>Lịch tháng</CardTitle>
+            <CardTitle>Monthly Calendar</CardTitle>
           </CardHeader>
           <CardContent className="flex justify-center">
-            <Calendar onChange={(value) => value && setDate(value as Date)} value={date} locale="vi-VN" />
+            <Calendar onChange={(value) => value && setDate(value as Date)} value={date} locale="en-US" />
           </CardContent>
         </Card>
       </div>
 
-      {/* Biểu đồ 2 */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Đề tài theo tháng</CardTitle>
-        </CardHeader>
-        <CardContent className="h-[300px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={topicsByMonth}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="month" />
-              <YAxis />
-              <Tooltip />
-              <Bar dataKey="topics" fill="#10b981" />
-            </BarChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
+      {/* Daily Line Charts */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 gap-6">
+        {renderLineChart("Students per Day", dailyStudents, "#3b82f6")}
+        {renderLineChart("Majors per Day", dailyMajors, "#f97316")}
+        {renderLineChart("Curriculums per Day", dailyCurriculums, "#10b981")}
+        {renderLineChart("AI Messages per Day", dailyMessages, "#a855f7")}
+      </div>
     </div>
   );
 };

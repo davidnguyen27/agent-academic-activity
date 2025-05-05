@@ -13,8 +13,5 @@ interface Student {
   deletedAt?: string | null;
   isDeleted?: boolean;
   userId: string;
-  user?: {
-    email: string;
-    isActive: boolean;
-  };
+  user?: User;
 }

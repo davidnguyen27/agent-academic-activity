@@ -75,9 +75,10 @@ export default function ChatPage() {
       });
 
       const { messageAI } = res;
+      const content = messageAI.messageContent?.trim?.() || "AI không có phản hồi.";
 
       setTimeout(() => {
-        simulateTypewriterEffect(messageAI.messageContent, setMessages, () => setIsTyping(false), messagesEndRef);
+        simulateTypewriterEffect(content, setMessages, () => setIsTyping(false), messagesEndRef);
       }, 300);
 
       triggerReload();
@@ -132,10 +133,12 @@ export default function ChatPage() {
         const response = await sessionService.getSessionById(chatId);
         const logs: ServerMessageItem[] = response.messages.items;
 
-        const formattedMessages: { role: "user" | "assistant"; content: string }[] = logs.map((log) => ({
-          role: log.isBotResponse ? "assistant" : "user",
-          content: log.messageContent,
-        }));
+        const formattedMessages: { role: "user" | "assistant"; content: string }[] = logs
+          .map((log) => ({
+            role: log.isBotResponse ? ("assistant" as const) : ("user" as const),
+            content: log.messageContent,
+          }))
+          .reverse();
 
         setMessages(formattedMessages);
       } catch (err) {

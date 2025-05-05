@@ -1,8 +1,13 @@
 import { useState, useEffect } from "react";
 import { Plus, ChevronsLeft, ChevronsRight, X, BookOpenText, GraduationCap, Layers, Settings2 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
 import { useNavigate } from "react-router-dom";
 import ModalUser from "./ModalUser";
-// import { useAuth } from "@/contexts/AuthContext";
 import { sessionService } from "@/services/chat.service";
 import { toast } from "sonner";
 import { useChatSession } from "@/contexts/ChatSessionContext";
@@ -22,7 +27,6 @@ export default function UserSidebar() {
     }[]
   >([]);
 
-  // const { user } = useAuth();
   const { reloadToken } = useChatSession();
 
   useEffect(() => {
@@ -152,18 +156,25 @@ export default function UserSidebar() {
             {collapsed ? <ChevronsRight className="h-5 w-5" /> : <ChevronsLeft className="h-5 w-5" />}
           </button>
 
-          <div className="flex flex-col gap-2">
-            {(["Default", "Subject", "Major", "Program", "Combo"] as const).map((type) => (
-              <button
-                key={type}
-                onClick={() => handleNewChatByType(type)}
-                className="flex items-center justify-center p-2 border border-white/20 rounded-md hover:bg-white/10 transition gap-2"
-              >
-                {iconMap[type]}
-                {!collapsed && <span>{type} Chat</span>}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="flex items-center justify-center p-2 border border-white/20 rounded-md hover:bg-white/10 transition gap-2">
+                <Plus className="h-4 w-4" />
+                {!collapsed && <span>New Chat</span>}
               </button>
-            ))}
-          </div>
+            </DropdownMenuTrigger>
+
+            <DropdownMenuContent side="right" align="start" className="w-40">
+              {(["Default", "Subject", "Major", "Program", "Combo"] as const).map((type) => (
+                <DropdownMenuItem key={type} onClick={() => handleNewChatByType(type)}>
+                  <div className="flex items-center gap-2">
+                    {iconMap[type]}
+                    <span>{type}</span>
+                  </div>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
 
           <nav className="flex flex-col gap-2 mt-4 overflow-y-auto flex-1">
             {loading ? (
@@ -185,9 +196,7 @@ export default function UserSidebar() {
                     {!collapsed && (
                       <div className="w-6 h-6 flex items-center justify-center">{iconMap[session.type]}</div>
                     )}
-                    <div className="truncate text-sm">
-                      {collapsed ? null : navigatingId === session.id ? "Loading..." : session.title}
-                    </div>
+                    <div className="truncate max-w-[200px] text-sm">{!collapsed && session.title}</div>
                   </button>
 
                   {!collapsed && (
@@ -227,7 +236,7 @@ export default function UserSidebar() {
         </div>
       </aside>
 
-      <ModalUser open={openProfile} onOpenChange={setOpenProfile} user={user} />
+      <ModalUser open={openProfile} onOpenChange={setOpenProfile} />
     </>
   );
 }

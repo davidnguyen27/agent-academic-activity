@@ -1,5 +1,10 @@
+import { useDebounce } from "@/hooks/useDebounce";
+import { useLoading } from "@/hooks/useLoading";
+import { curriculumService } from "@/services/curriculum.service";
+import { ploService } from "@/services/plo.service";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, Link } from "react-router-dom";
+import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
@@ -17,73 +22,53 @@ import {
   BreadcrumbList,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import { BadgeInfo, Maximize2, Trash2 } from "lucide-react";
+import { BadgeInfo, Trash2 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { toast } from "sonner";
-import { curriculumService } from "@/services/curriculum.service";
-import { majorService } from "@/services/major.service";
-import { useDebounce } from "@/hooks/useDebounce";
-import { useLoading } from "@/hooks/useLoading";
 import { Button } from "@/components/ui/button";
-import ConfirmDeleteDialog from "@/components/layouts/admin/ModalConfirm";
 import { TableSkeleton } from "@/components/common/TableSkeleton";
+import { formatDateTime } from "@/utils/format/date-time.format";
+import ConfirmDeleteDialog from "@/components/layouts/admin/ModalConfirm";
 import { EmptySearchResult } from "@/components/common/EmptySearchResult";
-import { Badge } from "@/components/ui/badge";
-import { programService } from "@/services/program.service";
-import ModalMajorDetail from "@/components/layouts/admin/majors/ModalDetail";
-import ModalProgramDetail from "@/components/layouts/admin/programs/ModalDetail";
+import ModalCurriculumDetail from "@/components/layouts/admin/curriculums/ModalDetail";
+import ModalCreatePLO from "@/components/layouts/admin/plos/ModalCreate";
 
-const CurriculumManagement = () => {
+const PLOManagement = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const [plos, setPLOs] = useState<PLO[]>([]);
   const [curriculums, setCurriculums] = useState<Curriculum[]>([]);
-  const [majors, setMajors] = useState<Major[]>([]);
-  const [programs, setPrograms] = useState<Program[]>([]);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [sortBy, setSortBy] = useState<"code" | "name" | "default">("default");
   const [sortType, setSortType] = useState<"Ascending" | "Descending">("Ascending");
   const [deletedFilter, setDeletedFilter] = useState(false);
   const [selectedCurriculum, setSelectedCurriculum] = useState<Curriculum | null>(null);
+  const [selectedPLO, setSelectedPLO] = useState<PLO | null>(null);
   const [openDetail, setOpenDetail] = useState(false);
+  const [openCreate, setOpenCreate] = useState(false);
+  const [openCurriculum, setOpenCurriculum] = useState(false);
   const [totalPages, setTotalPages] = useState(1);
-  const [openMajor, setOpenMajor] = useState(false);
-  const [openProgram, setOpenProgram] = useState(false);
-  const [selectedMajor, setSelectedMajor] = useState<Major | null>(null);
-  const [selectedProgram, setSelectedProgram] = useState<Program | null>(null);
 
   const debouncedSearch = useDebounce(search, 500);
   const { isLoading, startLoading } = useLoading();
   const pageSize = 10;
 
-  const majorMap = useMemo(() => {
+  const curriculumMap = useMemo(() => {
     const map = new Map<string, string>();
-    majors.forEach((m) => map.set(m.majorId, m.majorName));
+    curriculums.forEach((c) => map.set(c.curriculumId, c.curriculumName));
     return map;
-  }, [majors]);
+  }, [curriculums]);
 
   useEffect(() => {
-    majorService.getAllMajors({ pageSize: 1000 }).then((res) => {
-      setMajors(res.items);
+    curriculumService.getAllCurriculums({ pageSize: 1000 }).then((res) => {
+      setCurriculums(res.items);
     });
   }, []);
 
-  const programMap = useMemo(() => {
-    const map = new Map<string, string>();
-    programs.forEach((p) => map.set(p.programId, p.programName));
-    return map;
-  }, [programs]);
-
-  useEffect(() => {
-    programService.getAllPrograms({ pageSize: 1000 }).then((res) => {
-      setPrograms(res.items);
-    });
-  }, []);
-
-  const fetchCurriculums = useCallback(async () => {
+  const fetchPLOs = useCallback(async () => {
     const res = await startLoading(() =>
-      curriculumService.getAllCurriculums({
+      ploService.getAllPLOs({
         pageNumber: page,
         pageSize,
         search: debouncedSearch,
@@ -92,51 +77,51 @@ const CurriculumManagement = () => {
         isDelete: deletedFilter,
       })
     );
-    setCurriculums(res.items);
+    setPLOs(res.items);
     setTotalPages(res.totalPages);
   }, [page, pageSize, debouncedSearch, startLoading, sortBy, sortType, deletedFilter]);
 
   const handleOpenDetail = useCallback(async (id: string) => {
     try {
-      const data = await curriculumService.getCurriculumById(id);
-      setSelectedCurriculum(data);
+      const data = await ploService.getPLOById(id);
+      setSelectedPLO(data);
       setOpenDetail(true);
     } catch {
-      toast.error("Failed to load curriculum details");
+      toast.error("Failed to load PLO details");
     }
   }, []);
 
   const handleDelete = async (id: string) => {
     try {
-      await curriculumService.deleteCurriculum(id);
-      toast.success("Curriculum deleted successfully!");
-      await fetchCurriculums();
+      await ploService.deletePLO(id);
+      toast.success("PLO deleted successfully!");
+      await fetchPLOs();
     } catch {
-      toast.error("Failed to delete curriculum");
+      toast.error("Failed to delete PLO");
     }
   };
 
   useEffect(() => {
     const id = new URLSearchParams(location.search).get("id");
 
-    if (id && (!openDetail || selectedCurriculum?.curriculumId !== id)) {
+    if (id && (!openDetail || selectedPLO?.programingLearningOutcomeId !== id)) {
       handleOpenDetail(id);
     }
     if (!id && openDetail) {
       setOpenDetail(false);
       setSelectedCurriculum(null);
     }
-  }, [location.search, openDetail, selectedCurriculum, handleOpenDetail]);
+  }, [location.search, openDetail, selectedPLO, handleOpenDetail]);
 
   useEffect(() => {
-    fetchCurriculums();
-  }, [fetchCurriculums]);
+    fetchPLOs();
+  }, [fetchPLOs]);
 
   return (
     <div className="bg-white p-6 shadow-md rounded-2xl">
       {/* Title + Breadcrumb */}
       <div className="flex flex-col gap-2">
-        <h1 className="text-3xl font-bold text-gray-800">Curriculum Management</h1>
+        <h1 className="text-3xl font-bold text-gray-800">PLO Management</h1>
         <Breadcrumb className="my-6">
           <BreadcrumbList className="text-gray-500 text-sm">
             <BreadcrumbItem>
@@ -145,7 +130,13 @@ const CurriculumManagement = () => {
               </BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbSeparator />
-            <BreadcrumbItem>Curriculums</BreadcrumbItem>
+            <BreadcrumbItem>
+              <BreadcrumbLink asChild>
+                <Link to="/admin/curriculum">Curriculums</Link>
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>PLOs</BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
       </div>
@@ -203,15 +194,11 @@ const CurriculumManagement = () => {
         </div>
 
         <div className="ml-auto flex gap-2">
-          <Button variant="outline" onClick={() => navigate("/admin/curriculum/plo")}>
-            PLO Overview
-          </Button>
-
           <Button
             className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white"
-            onClick={() => navigate("/admin/curriculum/create")}
+            onClick={() => setOpenCreate(true)}
           >
-            + Add a Curriculum
+            + Add a PLO
           </Button>
         </div>
       </div>
@@ -224,68 +211,50 @@ const CurriculumManagement = () => {
               <TableHead className="text-center">#</TableHead>
               <TableHead>Code</TableHead>
               <TableHead>Name</TableHead>
-              <TableHead>Decision No</TableHead>
-              <TableHead>Major</TableHead>
-              <TableHead>Program</TableHead>
-              <TableHead className="text-center">Approved</TableHead>
+              <TableHead>Curriculum</TableHead>
+              <TableHead>Created At</TableHead>
+              <TableHead>Updated At</TableHead>
+              <TableHead>Description</TableHead>
               <TableHead className="text-center">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
               <TableSkeleton columns={8} />
-            ) : curriculums.length > 0 ? (
-              curriculums.map((curriculum, index) => (
-                <TableRow key={curriculum.curriculumId} className="hover:bg-gray-50 transition-all">
+            ) : plos.length > 0 ? (
+              plos.map((plo, index) => (
+                <TableRow key={plo.programingLearningOutcomeId} className="hover:bg-gray-50 transition-all">
                   <TableCell className="text-center">{(page - 1) * pageSize + index + 1}</TableCell>
-                  <TableCell className="truncate max-w-[100px]" title={curriculum.curriculumCode}>
-                    {curriculum.curriculumCode}
+                  <TableCell className="truncate max-w-[100px]" title={plo.programingLearningOutcomeCode}>
+                    {plo.programingLearningOutcomeCode}
                   </TableCell>
-                  <TableCell className="truncate max-w-[250px]" title={curriculum.curriculumName}>
-                    {curriculum.curriculumName}
-                  </TableCell>
-                  <TableCell className="truncate max-w-[150px]" title={curriculum.decisionNo}>
-                    {curriculum.decisionNo}
+                  <TableCell className="truncate max-w-[100px]" title={plo.programingLearningOutcomeName}>
+                    {plo.programingLearningOutcomeName}
                   </TableCell>
                   <TableCell
-                    className="truncate max-w-[100px] cursor-pointer text-blue-600 hover:underline"
-                    title={majorMap.get(curriculum.majorId) ?? "-"}
+                    className="truncate max-w-[250px] cursor-pointer text-blue-600 hover:underline"
+                    title={curriculumMap.get(plo.curriculumId) ?? "-"}
                     onClick={() => {
-                      const major = majors.find((m) => m.majorId === curriculum.majorId);
-                      if (major) {
-                        setSelectedMajor(major);
-                        setOpenMajor(true);
+                      const curriculum = curriculums.find((c) => c.curriculumId === plo.curriculumId);
+                      if (curriculum) {
+                        setSelectedCurriculum(curriculum);
+                        setOpenCurriculum(true);
                       }
                     }}
                   >
-                    {majorMap.get(curriculum.majorId)}
+                    {curriculumMap.get(plo.curriculumId)}
                   </TableCell>
-                  <TableCell
-                    className="truncate max-w-[100px] cursor-pointer text-blue-600 hover:underline"
-                    title={programMap.get(curriculum.programId) ?? "-"}
-                    onClick={() => {
-                      const program = programs.find((p) => p.programId === curriculum.programId);
-                      if (program) {
-                        setSelectedProgram(program);
-                        setOpenProgram(true);
-                      }
-                    }}
-                  >
-                    {programMap.get(curriculum.programId)}
+                  <TableCell className="truncate max-w-[200px]" title={formatDateTime(plo.createdAt)}>
+                    {formatDateTime(plo.createdAt)}
                   </TableCell>
-                  <TableCell className="max-w-[50px] text-center">
-                    {curriculum.isApproved ? (
-                      <Badge variant="outline" className="text-green-600 border-green-500">
-                        Yes
-                      </Badge>
-                    ) : (
-                      <Badge variant="outline" className="text-red-600 border-red-500">
-                        No
-                      </Badge>
-                    )}
+                  <TableCell className="truncate max-w-[200px]" title={formatDateTime(plo.updatedAt)}>
+                    {formatDateTime(plo.updatedAt)}
                   </TableCell>
-                  <TableCell className="flex justify-center gap-3">
-                    <ConfirmDeleteDialog onConfirm={() => handleDelete(curriculum.curriculumId)}>
+                  <TableCell className="truncate max-w-[200px]" title={plo.description}>
+                    {plo.description}
+                  </TableCell>
+                  <TableCell className="flex justify-center gap-2">
+                    <ConfirmDeleteDialog onConfirm={() => handleDelete(plo.programingLearningOutcomeId)}>
                       <Trash2
                         size={18}
                         className="text-red-500 hover:text-red-600 hover:scale-110 transition-transform cursor-pointer"
@@ -294,14 +263,7 @@ const CurriculumManagement = () => {
                     <BadgeInfo
                       size={18}
                       className="text-blue-500 hover:text-blue-600 hover:scale-110 transition-transform cursor-pointer"
-                      onClick={() => navigate(`/admin/curriculum/details?id=${curriculum.curriculumId}`)}
-                    />
-                    <Maximize2
-                      size={18}
-                      className="text-gray-500 hover:text-blue-600 hover:scale-110 cursor-pointer transition-transform"
-                      onClick={() => {
-                        navigate(`/admin/curriculum/overview?id=${curriculum.curriculumId}`);
-                      }}
+                      onClick={() => navigate(`/admin/curriculum/details?id=${plo.programingLearningOutcomeId}`)}
                     />
                   </TableCell>
                 </TableRow>
@@ -338,10 +300,19 @@ const CurriculumManagement = () => {
         </Pagination>
       </div>
 
-      <ModalMajorDetail open={openMajor} onClose={() => setOpenMajor(false)} major={selectedMajor} />
-      <ModalProgramDetail open={openProgram} onClose={() => setOpenProgram(false)} program={selectedProgram} />
+      <ModalCurriculumDetail
+        open={openCurriculum}
+        onClose={() => setOpenCurriculum(false)}
+        curriculum={selectedCurriculum}
+      />
+      <ModalCreatePLO
+        open={openCreate}
+        onClose={() => setOpenCreate(false)}
+        onCreated={fetchPLOs}
+        curriculums={curriculums}
+      />
     </div>
   );
 };
 
-export default CurriculumManagement;
+export default PLOManagement;

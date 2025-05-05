@@ -6,7 +6,7 @@ interface params {
   pageSize?: number;
   search?: string;
   sortBy?: "name" | "code" | "default";
-  sortOrder?: "Ascending" | "Descending";
+  sortType?: "Ascending" | "Descending";
   isDelete?: boolean;
 }
 
@@ -16,11 +16,11 @@ export const toolService = {
     pageSize = 10,
     search = "",
     sortBy = "code",
-    sortOrder = "Ascending",
+    sortType = "Ascending",
     isDelete = false,
   }: params) => {
     const response = await axiosInstance.get("/api/tools", {
-      params: { pageNumber, pageSize, search, sortBy, sortOrder, isDelete },
+      params: { pageNumber, pageSize, search, sortBy, sortType, isDelete },
     });
     return response.data;
   },

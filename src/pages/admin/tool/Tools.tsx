@@ -27,6 +27,8 @@ import { useLoading } from "@/hooks/useLoading";
 import { toast } from "sonner";
 import ConfirmDeleteDialog from "@/components/layouts/admin/ModalConfirm";
 import { formatDateTime } from "@/utils/format/date-time.format";
+import { TableSkeleton } from "@/components/common/TableSkeleton";
+import { EmptySearchResult } from "@/components/common/EmptySearchResult";
 
 const ToolManagement = () => {
   const navigate = useNavigate();
@@ -37,6 +39,7 @@ const ToolManagement = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [page, setPage] = useState(1);
   const [sortBy, setSortBy] = useState<"code" | "name" | "default">("default");
+  const [sortType, setSortType] = useState<"Ascending" | "Descending">("Ascending");
   const [deletedFilter, setDeletedFilter] = useState(false);
   const [selectedTool, setSelectedTool] = useState<Tool | null>(null);
   const [openDetail, setOpenDetail] = useState(false);
@@ -52,12 +55,13 @@ const ToolManagement = () => {
         pageSize,
         search: debouncedSearch,
         sortBy: sortBy === "default" ? undefined : sortBy,
+        sortType,
         isDelete: deletedFilter,
       })
     );
     setTools(res.items);
     setTotalPages(res.totalPages);
-  }, [page, pageSize, debouncedSearch, startLoading, sortBy, deletedFilter]);
+  }, [page, pageSize, debouncedSearch, startLoading, sortBy, sortType, deletedFilter]);
 
   const handleOpenDetail = useCallback(async (id: string) => {
     try {
@@ -98,54 +102,82 @@ const ToolManagement = () => {
   }, [fetchTools]);
 
   return (
-    <div className="bg-white p-5 shadow-md rounded-2xl">
-      <h1 className="text-2xl font-bold text-blue-500 mb-4">Tool Management</h1>
+    <div className="bg-white p-6 shadow-md rounded-xl">
+      <h1 className="text-3xl font-bold text-gray-800">Tool Management</h1>
 
-      <Breadcrumb>
+      <Breadcrumb className="my-6">
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
-              <Link to="/admin/dashboard" className="text-blue-600 hover:underline">
-                Home
-              </Link>
+              <Link to="/admin/dashboard">Dashboard</Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbLink>Tools</BreadcrumbLink>
-          </BreadcrumbItem>
+          <BreadcrumbItem>Tools</BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 my-6">
-        <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by name..." />
-        <Select onValueChange={(value) => setSortBy(value as "code" | "name" | "default")}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Sort by field" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="default">Default</SelectItem>
-            <SelectItem value="code">Sort by Code</SelectItem>
-            <SelectItem value="name">Sort by Name</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select onValueChange={(value) => setDeletedFilter(value === "true")}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Active or Deleted" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="false">Active</SelectItem>
-            <SelectItem value="true">Deleted</SelectItem>
-          </SelectContent>
-        </Select>
-        <ToolCreateDialog onSuccess={fetchTools} />
+      <div className="flex flex-wrap items-end justify-between gap-4 bg-gray-50 p-4 rounded-lg border mb-6">
+        <div className="flex flex-col gap-1">
+          <label className="text-sm text-gray-600">Search</label>
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search by code..."
+            className="w-60"
+          />
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <label className="text-sm text-gray-600">Sort By</label>
+          <Select onValueChange={(value) => setSortBy(value as "code" | "name" | "default")} defaultValue="default">
+            <SelectTrigger className="w-44">
+              <SelectValue placeholder="Sort field" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="default">Default</SelectItem>
+              <SelectItem value="code">Code</SelectItem>
+              <SelectItem value="name">Name</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <label className="text-sm text-gray-600">Sort Type</label>
+          <Select onValueChange={(value) => setSortType(value as "Ascending" | "Descending")} defaultValue="Ascending">
+            <SelectTrigger className="w-40">
+              <SelectValue placeholder="Sort Type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Ascending">Ascending</SelectItem>
+              <SelectItem value="Descending">Descending</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <label className="text-sm text-gray-600">Status</label>
+          <Select onValueChange={(value) => setDeletedFilter(value === "true")} defaultValue="false">
+            <SelectTrigger className="w-40">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="false">Active</SelectItem>
+              <SelectItem value="true">Deleted</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="ml-auto">
+          <ToolCreateDialog onSuccess={fetchTools} />
+        </div>
       </div>
 
       <div className="rounded-lg border overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>No.</TableHead>
+              <TableHead>#</TableHead>
               <TableHead>Code</TableHead>
               <TableHead>Name</TableHead>
               <TableHead>Description</TableHead>
@@ -158,22 +190,18 @@ const ToolManagement = () => {
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              <TableRow>
-                <TableCell colSpan={9} className="text-center py-10">
-                  <span className="text-blue-500 animate-pulse">Loading...</span>
-                </TableCell>
-              </TableRow>
+              <TableSkeleton columns={9} />
             ) : tools.length > 0 ? (
               tools.map((tool, i) => (
                 <TableRow key={tool.toolCode}>
                   <TableCell>{(page - 1) * pageSize + i + 1}</TableCell>
-                  <TableCell>{tool.toolCode}</TableCell>
-                  <TableCell>{tool.toolName}</TableCell>
-                  <TableCell>{tool.description}</TableCell>
-                  <TableCell>{formatDateTime(tool.publishedDate)}</TableCell>
-                  <TableCell>{tool.author}</TableCell>
-                  <TableCell>{tool.publisher}</TableCell>
-                  <TableCell>{tool.note}</TableCell>
+                  <TableCell className="truncate max-w-[100px]">{tool.toolCode}</TableCell>
+                  <TableCell className="truncate max-w-[100px]">{tool.toolName}</TableCell>
+                  <TableCell className="truncate max-w-[100px]">{tool.description}</TableCell>
+                  <TableCell className="truncate max-w-[100px]">{formatDateTime(tool.publishedDate)}</TableCell>
+                  <TableCell className="truncate max-w-[100px]">{tool.author}</TableCell>
+                  <TableCell className="truncate max-w-[100px]">{tool.publisher}</TableCell>
+                  <TableCell className="truncate max-w-[100px]">{tool.note}</TableCell>
                   <TableCell className="flex gap-2">
                     <ConfirmDeleteDialog onConfirm={() => handleDeleteTool(tool.toolId)}>
                       <Trash2 size={16} color="red" className="cursor-pointer" />
@@ -191,8 +219,8 @@ const ToolManagement = () => {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={9} className="text-center text-gray-400">
-                  Result is not found.
+                <TableCell colSpan={9}>
+                  <EmptySearchResult />
                 </TableCell>
               </TableRow>
             )}

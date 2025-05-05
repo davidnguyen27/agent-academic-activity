@@ -187,7 +187,7 @@ const ProgramManagement = () => {
 
       <div className="rounded-lg border overflow-x-auto">
         <Table>
-          <TableHeader>
+          <TableHeader className="bg-gray-100">
             <TableRow>
               <TableHead>No.</TableHead>
               <TableHead>Code</TableHead>

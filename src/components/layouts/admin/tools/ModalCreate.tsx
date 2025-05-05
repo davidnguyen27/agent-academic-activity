@@ -40,7 +40,7 @@ export default function ToolCreateDialog({ onSuccess }: ToolCreateDialogProps) {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="destructive">Add a tool</Button>
+        <Button className="bg-blue-600 hover:bg-blue-700 text-white">+ Add a tool</Button>
       </DialogTrigger>
 
       <DialogContent className="sm:max-w-lg">

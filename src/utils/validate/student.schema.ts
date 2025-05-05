@@ -25,7 +25,6 @@ export const studentSchema = z.object({
     .refine((val) => !val || /^\d{4}$/.test(val), {
       message: "Intake year must be a 4-digit year",
     }),
-  email: z.string().email("Email is not valid"),
 });
 
 export type UserFormData = z.infer<typeof studentSchema>;

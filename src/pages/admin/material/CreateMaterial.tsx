@@ -50,69 +50,82 @@ const CreateMaterial = () => {
   };
 
   return (
-    <div className="bg-white p-5 rounded-xl shadow-md">
-      <h2 className="text-2xl font-bold mb-6 text-blue-500">Create Material</h2>
-      <form onSubmit={handleSubmit(onSubmit)} className="grid md:grid-cols-2 gap-6">
+    <div className="bg-white p-6 rounded-xl shadow-md">
+      <h2 className="text-3xl font-bold text-blue-600 mb-8 border-b pb-2">Create New Material</h2>
+
+      <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Row 1: Material Code + Name */}
         <div>
           <Label htmlFor="materialCode">Material Code</Label>
           <Input id="materialCode" {...register("materialCode")} />
-          {errors.materialCode && <p className="text-sm text-red-500">{errors.materialCode.message}</p>}
+          {errors.materialCode && <p className="text-sm text-red-500 mt-1">{errors.materialCode.message}</p>}
         </div>
 
         <div>
           <Label htmlFor="materialName">Material Name</Label>
           <Input id="materialName" {...register("materialName")} />
-          {errors.materialName && <p className="text-sm text-red-500">{errors.materialName.message}</p>}
+          {errors.materialName && <p className="text-sm text-red-500 mt-1">{errors.materialName.message}</p>}
         </div>
 
-        <div className="md:col-span-2">
+        {/* Row 2: Description (full width) */}
+        <div className="col-span-2">
           <Label htmlFor="materialDescription">Description</Label>
           <Textarea id="materialDescription" {...register("materialDescription")} rows={3} />
-          {errors.materialDescription && <p className="text-sm text-red-500">{errors.materialDescription.message}</p>}
+          {errors.materialDescription && (
+            <p className="text-sm text-red-500 mt-1">{errors.materialDescription.message}</p>
+          )}
         </div>
 
+        {/* Row 3: Author + Publisher */}
         <div>
           <Label htmlFor="author">Author</Label>
           <Input id="author" {...register("author")} />
-          {errors.author && <p className="text-sm text-red-500">{errors.author.message}</p>}
+          {errors.author && <p className="text-sm text-red-500 mt-1">{errors.author.message}</p>}
         </div>
 
         <div>
           <Label htmlFor="publisher">Publisher</Label>
           <Input id="publisher" {...register("publisher")} />
-          {errors.publisher && <p className="text-sm text-red-500">{errors.publisher.message}</p>}
+          {errors.publisher && <p className="text-sm text-red-500 mt-1">{errors.publisher.message}</p>}
         </div>
 
+        {/* Row 4: Published Date + Edition */}
         <div>
           <Label htmlFor="publishedDate">Published Date</Label>
           <Input id="publishedDate" type="datetime-local" {...register("publishedDate")} />
-          {errors.publishedDate && <p className="text-sm text-red-500">{errors.publishedDate.message}</p>}
+          {errors.publishedDate && <p className="text-sm text-red-500 mt-1">{errors.publishedDate.message}</p>}
         </div>
 
         <div>
           <Label htmlFor="edition">Edition</Label>
           <Input id="edition" {...register("edition")} />
-          {errors.edition && <p className="text-sm text-red-500">{errors.edition.message}</p>}
+          {errors.edition && <p className="text-sm text-red-500 mt-1">{errors.edition.message}</p>}
         </div>
 
+        {/* Row 5: ISBN + Note (note full width) */}
         <div>
           <Label htmlFor="isbn">ISBN</Label>
           <Input id="isbn" {...register("isbn")} />
-          {errors.isbn && <p className="text-sm text-red-500">{errors.isbn.message}</p>}
+          {errors.isbn && <p className="text-sm text-red-500 mt-1">{errors.isbn.message}</p>}
         </div>
 
-        <div className="md:col-span-2">
+        <div className="col-span-1 md:col-span-2">
           <Label htmlFor="note">Note</Label>
           <Textarea id="note" {...register("note")} rows={2} />
-          {errors.note && <p className="text-sm text-red-500">{errors.note.message}</p>}
+          {errors.note && <p className="text-sm text-red-500 mt-1">{errors.note.message}</p>}
         </div>
 
+        {/* Row 6: Switches */}
         <div>
           <Label>Is Main Material</Label>
           <Controller
             control={control}
             name="isMainMaterial"
-            render={({ field }) => <Switch checked={field.value} onCheckedChange={field.onChange} />}
+            render={({ field }) => (
+              <div className="mt-2">
+                <Switch checked={field.value} onCheckedChange={field.onChange} />
+              </div>
+            )}
           />
         </div>
 
@@ -121,7 +134,11 @@ const CreateMaterial = () => {
           <Controller
             control={control}
             name="isHardCopy"
-            render={({ field }) => <Switch checked={field.value} onCheckedChange={field.onChange} />}
+            render={({ field }) => (
+              <div className="mt-2">
+                <Switch checked={field.value} onCheckedChange={field.onChange} />
+              </div>
+            )}
           />
         </div>
 
@@ -130,10 +147,15 @@ const CreateMaterial = () => {
           <Controller
             control={control}
             name="isOnline"
-            render={({ field }) => <Switch checked={field.value} onCheckedChange={field.onChange} />}
+            render={({ field }) => (
+              <div className="mt-2">
+                <Switch checked={field.value} onCheckedChange={field.onChange} />
+              </div>
+            )}
           />
         </div>
 
+        {/* Row 7: Subject Dropdown */}
         <div className="md:col-span-2">
           <Label htmlFor="subjectId">Subject</Label>
           <Select onValueChange={(value) => setValue("subjectId", value)} defaultValue="">
@@ -148,11 +170,12 @@ const CreateMaterial = () => {
               ))}
             </SelectContent>
           </Select>
-          {errors.subjectId && <p className="text-sm text-red-500">{errors.subjectId.message}</p>}
+          {errors.subjectId && <p className="text-sm text-red-500 mt-1">{errors.subjectId.message}</p>}
         </div>
 
-        <div className="md:col-span-2">
-          <Button type="submit" disabled={isSubmitting}>
+        {/* Row 8: Actions */}
+        <div className="md:col-span-2 flex justify-end mt-4">
+          <Button type="submit" disabled={isSubmitting} className="px-6">
             {isSubmitting ? "Creating..." : "Create Material"}
           </Button>
         </div>

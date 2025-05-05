@@ -1,3 +1,18 @@
+export const scrollToBottom = (ref?: React.RefObject<HTMLDivElement | null>) => {
+  if (ref?.current) {
+    ref.current.scrollIntoView({ behavior: "smooth" });
+  }
+};
+
+export const createTypingDotsEffect = (setDots: (dots: string) => void) => {
+  let dotCount = 0;
+
+  return setInterval(() => {
+    dotCount = (dotCount + 1) % 4;
+    setDots(".".repeat(dotCount));
+  }, 500);
+};
+
 export const simulateTypewriterEffect = (
   fullText: string,
   updateMessages: (
@@ -8,43 +23,43 @@ export const simulateTypewriterEffect = (
   doneTyping: () => void,
   scrollRef?: React.RefObject<HTMLDivElement | null>
 ) => {
-  const characters = [...fullText];
+  if (!fullText || typeof fullText !== "string") {
+    updateMessages((prev) => [...prev, { role: "assistant", content: "AI not response." }]);
+    doneTyping();
+    return;
+  }
+
+  const characters = Array.from(fullText);
   let index = 0;
 
-  updateMessages((prev) => [...prev, { role: "assistant", content: "" }]);
+  // ✅ Hiển thị ký tự đầu tiên ngay khi bắt đầu
+  updateMessages((prev) => [...prev, { role: "assistant", content: characters[0] ?? "" }]);
 
   const typingInterval = setInterval(() => {
+    if (index >= characters.length) {
+      clearInterval(typingInterval);
+      doneTyping();
+      return;
+    }
+
     updateMessages((prev) => {
       const updated = [...prev];
       const last = updated[updated.length - 1];
-      if (last.role === "assistant") {
-        updated[updated.length - 1] = {
-          ...last,
-          content: last.content + characters[index],
-        };
-      }
+
+      if (!last || last.role !== "assistant") return prev;
+
+      const nextChar = characters[index];
+      if (nextChar === undefined) return prev;
+
+      updated[updated.length - 1] = {
+        ...last,
+        content: last.content + nextChar,
+      };
+
       return updated;
     });
 
     index++;
     scrollRef?.current?.scrollIntoView({ behavior: "smooth" });
-
-    if (index >= characters.length) {
-      clearInterval(typingInterval);
-      doneTyping();
-    }
   }, 20);
-};
-
-export const scrollToBottom = (ref: React.RefObject<HTMLDivElement | null>) => {
-  ref.current?.scrollIntoView({ behavior: "smooth" });
-};
-
-export const createTypingDotsEffect = (setDots: (dots: string) => void) => {
-  let count = 0;
-  const interval = setInterval(() => {
-    setDots(".".repeat((count % 3) + 1));
-    count++;
-  }, 500);
-  return interval;
 };

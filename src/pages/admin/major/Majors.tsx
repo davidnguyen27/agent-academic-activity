@@ -180,7 +180,7 @@ const MajorManagement = () => {
             className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white"
             onClick={() => setOpenCreateModal(true)}
           >
-            + Add a Curriculum
+            + Add a Major
           </Button>
         </div>
       </div>
